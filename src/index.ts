@@ -99,8 +99,22 @@ function esc(s: string): string {
 }
 
 function empresaAprovou(request: Request): boolean {
+  return cookieDe(request, "politica") === POLITICA.emissao;
+}
+
+function cookieDe(request: Request, nome: string): string | null {
   const cookie = request.headers.get("cookie") ?? "";
-  return cookie.split(";").some((parte) => parte.trim() === `politica=${POLITICA.emissao}`);
+  for (const parte of cookie.split(";")) {
+    const [chave, ...resto] = parte.trim().split("=");
+    if (chave === nome) return decodeURIComponent(resto.join("="));
+  }
+  return null;
+}
+
+function ir(para: string, cookies: string[]): Response {
+  const headers = new Headers({ location: para, "cache-control": "no-store" });
+  for (const cookie of cookies) headers.append("set-cookie", cookie);
+  return new Response(null, { status: 303, headers });
 }
 
 function resumo(arquivo: string | null, aprovada: boolean): string {
@@ -122,8 +136,8 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
   const lista = itens.map((item) => `<li>${esc(item)}</li>`).join("");
   const arquivoLinha = arquivo ? `<p>Arquivo recebido: ${esc(arquivo)}. O PDF não foi lido.</p>` : "";
   const acao = aprovada
-    ? `<p><strong>A empresa aprovou esta versão.</strong></p>`
-    : `<form method="post" action="/politica/aprovar"><button type="submit">Aprovar</button></form>`;
+    ? `<p><strong>A empresa aprovou esta versão.</strong></p><p><a href="/nota">Continuar para a nota</a></p>`
+    : `<form method="post" action="/politica/aprovar"><button type="submit">Aprovar e ver a nota</button></form>`;
   return `<!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
@@ -164,15 +178,12 @@ export default {
       return new Response(html, { headers: cabecalhos.html });
     }
     if (request.method === "GET" && url.pathname === "/resumo") {
-      return new Response(resumo(null, empresaAprovou(request)), { headers: cabecalhos.html });
+      return new Response(resumo(cookieDe(request, "arquivo"), empresaAprovou(request)), {
+        headers: { ...cabecalhos.html, "cache-control": "no-store" },
+      });
     }
     if (request.method === "POST" && url.pathname === "/politica/aprovar") {
-      return new Response(resumo(null, true), {
-        headers: {
-          ...cabecalhos.html,
-          "set-cookie": `politica=${POLITICA.emissao}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`,
-        },
-      });
+      return ir("/nota", [`politica=${POLITICA.emissao}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`]);
     }
     if (request.method === "POST" && url.pathname === "/politica") {
       const form = await request.formData();
@@ -183,9 +194,8 @@ export default {
       if (arquivo.size > 8_000_000) {
         return new Response("O arquivo passa de 8 MB.", { status: 413, headers: cabecalhos.html });
       }
-      return new Response(resumo(arquivo.name || "politica", empresaAprovou(request)), {
-        headers: cabecalhos.html,
-      });
+      const nome = encodeURIComponent(arquivo.name || "politica");
+      return ir("/resumo", [`arquivo=${nome}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`]);
     }
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, politica: POLITICA.emissao });
