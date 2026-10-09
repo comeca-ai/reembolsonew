@@ -241,8 +241,8 @@ export function painelTorito(uf: string, passosUf: string[], ufs: readonly strin
 <p class="numero">${esc(uf)}</p>
 <p class="contexto">Sem artigo na base.</p>
 <p class="efeito">O Pix não muda.</p>
+<p>${ufs.map((item) => esc(item)).join(" · ")}</p>
 <ol>${lista}</ol>
-<details><summary>UFs</summary><p>${ufs.map((item) => esc(item)).join(" · ")}</p></details>
 <footer>LC 214/2025 · não é decisão</footer>`,
     "/torito",
   );

@@ -5,6 +5,7 @@ import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 import { lerCnae } from "./cnae.ts";
 import { movimento } from "./movimento.ts";
 import { UFS, torito, type Regra } from "./torito.ts";
+import { torita, type Entrada } from "./torita.ts";
 
 const inicio = casca(
   "Anota sem volta",
@@ -143,6 +144,26 @@ async function responder(request: Request, env: Env): Promise<Response> {
       try {
         const corpo = JSON.parse(bruto) as { empresa?: string; uf?: string; data?: string; base?: Regra[] };
         return json(torito({ empresa: corpo.empresa ?? null, uf: corpo.uf ?? null, data: corpo.data ?? null }, corpo.base ?? []));
+      } catch {
+        return json({ erro: "json inválido" }, 400);
+      }
+    }
+    if (request.method === "POST" && url.pathname === "/api/torita") {
+      const bruto = await request.text();
+      try {
+        const corpo = JSON.parse(bruto) as Partial<Entrada>;
+        return json(torita({
+          hash: corpo.hash ?? null,
+          cnpj: corpo.cnpj ?? null,
+          valor: corpo.valor ?? null,
+          data: corpo.data ?? null,
+          telefone: corpo.telefone ?? null,
+          empresa: corpo.empresa ?? null,
+          hashOriginal: corpo.hashOriginal ?? null,
+          intervaloDias: corpo.intervaloDias ?? null,
+          tetoCentavos: corpo.tetoCentavos ?? null,
+          anteriores: corpo.anteriores ?? [],
+        }));
       } catch {
         return json({ erro: "json inválido" }, 400);
       }
