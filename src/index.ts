@@ -6,6 +6,7 @@ import { lerCnae } from "./cnae.ts";
 import { UFS, torito, type Regra } from "./torito.ts";
 import { torita, type Entrada } from "./torita.ts";
 import { toritoPagina } from "./torito-pagina.ts";
+import { logoTorita } from "./logo-torita.ts";
 import { linhas } from "./visoes.ts";
 
 const inicio = casca(
@@ -134,6 +135,10 @@ async function responder(request: Request, env: Env): Promise<Response> {
     }
     if (request.method === "GET" && (url.pathname === "/movimento" || url.pathname === "/torito")) {
       return new Response(toritoPagina, { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
+    }
+    if (request.method === "GET" && url.pathname === "/torita") {
+      const pagina = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Torita</title><body style="margin:0;background:#12100d;min-height:100vh;display:grid;place-items:center"><img alt="Logo da Torita" src="${logoTorita}" style="width:min(92vw,640px);height:auto"></body>`;
+      return new Response(pagina, { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
     }
     if (request.method === "POST" && url.pathname === "/api/torito") {
       const bruto = await request.text();
