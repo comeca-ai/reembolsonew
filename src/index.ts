@@ -1,6 +1,45 @@
 import { exemplos } from "./exemplos.ts";
 import { brl, julgar, POLITICA, type Comprovante } from "./politica.ts";
 
+const inicio = `<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anota sem volta</title>
+<style>
+  :root { color-scheme: light; --ink:#1c1915; --paper:#f3efe6; --muted:#5c564c; --line:#e4dac8; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.5 ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
+  main { max-width: 40rem; margin: 0 auto; padding: 72px 20px 80px; }
+  .marca { margin:0; font: 12px/1 ui-monospace, monospace; letter-spacing: .14em; color: var(--muted); }
+  h1 { margin: 28px 0 0; font: 500 4.2rem/0.95 Georgia, "Times New Roman", serif; }
+  p { max-width: 28rem; color: var(--muted); }
+  a.ir { display:inline-flex; align-items:center; height:48px; margin-top:28px; padding:0 18px; border-radius:8px; background:var(--ink); color:var(--paper); text-decoration:none; }
+  ol { margin: 64px 0 0; padding:0; list-style:none; border-top:1px solid var(--line); }
+  li { border-bottom:1px solid var(--line); }
+  li a { display:grid; grid-template-columns: 3rem 1fr; gap: 12px; padding: 22px 0; color: inherit; text-decoration: none; font: 500 1.7rem/1.15 Georgia, serif; }
+  .n { font: 12px/1 ui-monospace, monospace; color: var(--muted); padding-top: .45rem; }
+  nav { display:flex; gap:18px; margin:0 0 8px; }
+  nav a { color: var(--ink); }
+</style>
+<main>
+  <nav>
+    <a href="/">Início</a>
+    <a href="/politica">Política</a>
+    <a href="/resumo">Resumo</a>
+    <a href="/nota">Nota</a>
+  </nav>
+  <p class="marca">ANOTA SEM VOLTA</p>
+  <h1>A nota não volta sem a regra.</h1>
+  <p>Primeiro a política. A empresa lê o resumo e aprova. Depois a nota. O que não está escrito não entra.</p>
+  <a class="ir" href="/politica">Começar</a>
+  <ol>
+    <li><a href="/politica"><span class="n">01</span><span>A empresa sobe a política.</span></a></li>
+    <li><a href="/resumo"><span class="n">02</span><span>Aprova só o que está escrito.</span></a></li>
+    <li><a href="/nota"><span class="n">03</span><span>A nota entra. A regra decide.</span></a></li>
+  </ol>
+</main>`;
+
 const subir = `<!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
@@ -20,7 +59,8 @@ const subir = `<!doctype html>
 </style>
 <main>
 <nav style="display:flex;gap:18px;margin:0 0 28px">
-  <a href="/">Política</a>
+  <a href="/">Início</a>
+  <a href="/politica">Política</a>
   <a href="/resumo">Resumo</a>
   <a href="/nota">Nota</a>
 </nav>
@@ -56,7 +96,8 @@ const html = `<!doctype html>
 </style>
 <main>
 <nav style="display:flex;gap:18px;margin:0 0 28px">
-  <a href="/">Política</a>
+  <a href="/">Início</a>
+  <a href="/politica">Política</a>
   <a href="/resumo">Resumo</a>
   <a href="/nota">Nota</a>
 </nav>
@@ -154,7 +195,8 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
 </style>
 <main>
 <nav style="display:flex;gap:18px;margin:0 0 28px">
-  <a href="/">Política</a>
+  <a href="/">Início</a>
+  <a href="/politica">Política</a>
   <a href="/resumo">Resumo</a>
   <a href="/nota">Nota</a>
 </nav>
@@ -164,7 +206,7 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
   ${arquivoLinha}
   <ol>${lista}</ol>
   ${acao}
-  <p><a href="/">Subir outra</a> · <a href="/nota">Ver a nota</a></p>
+  <p><a href="/politica">Subir outra</a> · <a href="/nota">Ver a nota</a></p>
 </main>`;
 }
 
@@ -172,6 +214,9 @@ export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/") {
+      return new Response(inicio, { headers: cabecalhos.html });
+    }
+    if (request.method === "GET" && url.pathname === "/politica") {
       return new Response(subir, { headers: cabecalhos.html });
     }
     if (request.method === "GET" && url.pathname === "/nota") {
