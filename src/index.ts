@@ -230,14 +230,10 @@ async function responder(request: Request, env: Env): Promise<Response> {
       }
       const bytes = await foto.arrayBuffer();
       const hash = await sha256(bytes);
-      let texto = "";
-      try {
-        texto = await lerImagem(env.AI, bytes, foto.type);
-      } catch {
-        texto = "";
-      }
+      const lida = await lerImagem(env.AI, bytes, foto.type);
+      const texto = lida.texto;
       const nota = deLeitura(texto, dataSaoPaulo(new Date()));
-      const leitura = texto.trim() ? texto.slice(0, 180) : "A leitura não trouxe valor.";
+      const leitura = texto.trim() ? texto.slice(0, 280) : lida.erro ?? "A leitura não trouxe valor.";
       const anterior = cookieDe(request, "hash");
       const codigo = !hash ? "sem_base" : anterior === hash ? "duplicada" : texto.trim() ? "limpa" : "sem_base";
       const barra = codigo === "duplicada";
@@ -245,7 +241,8 @@ async function responder(request: Request, env: Env): Promise<Response> {
         ? { status: "barrada" as const, mensagem: `Barrada. ${FRASE.duplicada}`, motivos: [{ codigo, texto: FRASE.duplicada }], conforme: [], valorReembolsavelCentavos: null, politica: { nome: POLITICA.nome, empresa: POLITICA.empresa, emissao: POLITICA.emissao } }
         : julgar(nota);
       if (!texto.trim() && !barra) {
-        j = { ...j, status: "nao_lida", mensagem: "Não lida. A leitura não trouxe valor.", motivos: [{ codigo: "sem_valor", texto: "A leitura não trouxe valor." }], valorReembolsavelCentavos: null };
+        const motivo = lida.erro ?? "A leitura não trouxe valor.";
+        j = { ...j, status: "nao_lida", mensagem: `Não lida. ${motivo}`, motivos: [{ codigo: "sem_valor", texto: motivo }], valorReembolsavelCentavos: null };
       }
       const fiscal = j.status === "aprovada" ? "sem crédito" : null;
       const html = decisao(j, codigo === "limpa" ? null : FRASE[codigo], {
@@ -284,7 +281,18 @@ async function responder(request: Request, env: Env): Promise<Response> {
       const nome = encodeURIComponent(arquivo.name || "politica");
       return ir("/resumo", [`arquivo=${nome}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`]);
     }
-    if (request.method === "GET" && url.pathname === "/health") {
+    if (request.method === "GET" && url.pathname === "/ia") {
+      if (!env.AI) return json({ ia: false, erro: "binding AI ausente" });
+      try {
+        const saida = await env.AI.run("@cf/meta/llama-3.2-11b-vision-instruct", {
+          messages: [{ role: "user", content: "Responda só: ok" }],
+          max_tokens: 8,
+        });
+        return json({ ia: true, saida });
+      } catch (e) {
+        return json({ ia: false, erro: e instanceof Error ? e.message : "modelo não respondeu" }, 502);
+      }
+    }
       return json({ ok: true, politica: POLITICA.emissao });
     }
     if (request.method === "GET" && url.pathname === "/api/exemplos") return json(exemplos);

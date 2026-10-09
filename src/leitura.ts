@@ -1,36 +1,50 @@
 import type { Comprovante, MeioTaxi, Ocasiao, Pagamento, Tipo } from "./politica.ts";
 
+const MODELO = "@cf/meta/llama-3.2-11b-vision-instruct";
+
 const PROMPT = `Leia só o que está escrito na imagem. Não invente finalidade, categoria nem ocasião.
 Responda um JSON com as chaves: estabelecimento, cnpj, valor, data, pagamento, meio, ocasiao, nome, documentoFiscal, temCnpj, alcool.
 Valor no formato 20,00. Data AAAA-MM-DD se estiver escrita. Se um campo não estiver escrito, null.`;
 
-export async function lerImagem(
-  ai: { run: (modelo: string, entrada: unknown) => Promise<unknown> } | undefined,
-  bytes: ArrayBuffer,
-  tipo: string,
-): Promise<string> {
-  if (!ai) return "";
+type Ai = { run: (modelo: string, entrada: unknown) => Promise<unknown> };
+
+function textoDaSaida(saida: unknown): string {
+  if (typeof saida === "string") return saida;
+  if (!saida || typeof saida !== "object") return "";
+  const o = saida as Record<string, unknown>;
+  if (typeof o.response === "string") return o.response;
+  if (typeof o.description === "string") return o.description;
+  const result = o.result;
+  if (result && typeof result === "object" && typeof (result as Record<string, unknown>).response === "string") {
+    return (result as Record<string, unknown>).response as string;
+  }
+  return JSON.stringify(saida);
+}
+
+export async function lerImagem(ai: Ai | undefined, bytes: ArrayBuffer, tipo: string): Promise<{ texto: string; erro: string | null }> {
+  if (!ai) return { texto: "", erro: "O binding AI não está no Worker." };
   const bytesU8 = new Uint8Array(bytes);
   let bin = "";
   for (let i = 0; i < bytesU8.length; i += 0x8000) {
     bin += String.fromCharCode(...bytesU8.subarray(i, i + 0x8000));
   }
-  const b64 = btoa(bin);
-  const mime = tipo || "image/jpeg";
-  const saida = await ai.run("@cf/meta/llama-3.2-11b-vision-instruct", {
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "text", text: PROMPT },
-          { type: "image_url", image_url: { url: `data:${mime};base64,${b64}` } },
-        ],
-      },
-    ],
-  });
-  if (typeof saida === "string") return saida;
-  if (saida && typeof saida === "object" && "response" in saida && typeof saida.response === "string") return saida.response;
-  return "";
+  const imagem = `data:${tipo || "image/jpeg"};base64,${btoa(bin)}`;
+  try {
+    const saida = await ai.run(MODELO, {
+      messages: [
+        { role: "system", content: "Você lê nota fiscal. Só o que está escrito." },
+        { role: "user", content: PROMPT },
+      ],
+      image: imagem,
+      max_tokens: 400,
+    });
+    const texto = textoDaSaida(saida).trim();
+    if (!texto) return { texto: "", erro: "O modelo respondeu vazio." };
+    return { texto, erro: null };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "O modelo de visão não respondeu.";
+    return { texto: "", erro: msg };
+  }
 }
 
 function jsonDe(texto: string): Record<string, unknown> {
