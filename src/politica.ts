@@ -54,19 +54,7 @@ export type Julgamento = {
   politica: { nome: string; empresa: string; emissao: string };
 };
 
-const VP_PODE = new Set([
-  "taxi_convencional",
-  "sem_justificativa",
-  "fora_expediente",
-  "sem_aprovacao_gestor",
-  "onibus_aeroporto",
-  "pagamento_pix",
-  "cafe_manha",
-  "almoco_dia_util",
-  "beneficio_ja_pago",
-  "acima_teto",
-  "categoria",
-]);
+const VP_PODE = new Set(["acima_teto"]);
 
 export function brl(centavos: number): string {
   const sinal = centavos < 0 ? "-" : "";
@@ -101,14 +89,7 @@ function fimDeSemana(iso: string): boolean {
 }
 
 function ocasiaoDe(c: Comprovante): Ocasiao | null {
-  if (c.ocasiao) return c.ocasiao;
-  if (!c.hora) return null;
-  const [h, m] = c.hora.split(":").map((n) => Number(n));
-  if (!Number.isFinite(h)) return null;
-  const minutos = h * 60 + (Number.isFinite(m) ? m : 0);
-  if (minutos < 10 * 60) return "cafe";
-  if (minutos < 16 * 60) return "almoco";
-  return "jantar";
+  return c.ocasiao ?? null;
 }
 
 function nomeSituacao(c: Comprovante): "ok" | "ausente" | "terceiro" {
@@ -298,7 +279,7 @@ function julgarRefeicao(c: Comprovante, motivos: Motivo[], conforme: string[]): 
 
   const ocasiao = ocasiaoDe(c);
   if (!ocasiao) {
-    motivos.push({ codigo: "ocasiao", texto: "Não deu para classificar café, almoço ou jantar." });
+    motivos.push({ codigo: "ocasiao", texto: "A nota não escreve café, almoço ou jantar." });
     return null;
   }
 

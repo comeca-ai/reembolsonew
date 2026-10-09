@@ -31,7 +31,6 @@ export const exemplos: Comprovante[] = [
     temCnpj: true,
     nomeNoComprovante: null,
     pagamento: "dinheiro",
-    ocasiao: "cafe",
     alcool: false,
     hoje: HOJE,
   },

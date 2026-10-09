@@ -19,13 +19,20 @@ test("recibo 19 de táxi convencional é barrado", () => {
   assert.equal(j.valorReembolsavelCentavos, null);
 });
 
-test("NFC-e do Lucca às 06:34 é café e não reembolsa", () => {
+test("NFC-e do Lucca às 06:34 não vira café", () => {
   const j = julgar(exemplos[1]);
   assert.equal(j.status, "barrada");
-  assert.ok(j.motivos.some((m) => m.codigo === "cafe_manha"));
+  assert.ok(j.motivos.some((m) => m.codigo === "ocasiao"));
+  assert.ok(!j.motivos.some((m) => m.codigo === "cafe_manha"));
   assert.ok(!j.motivos.some((m) => m.codigo === "sem_documento_fiscal"));
   assert.ok(j.conforme.includes("dentro do prazo de 60 dias"));
   assert.ok(j.conforme.includes("documento fiscal"));
+});
+
+test("café escrito na nota não reembolsa", () => {
+  const j = julgar({ ...exemplos[1], ocasiao: "cafe" });
+  assert.equal(j.status, "barrada");
+  assert.ok(j.motivos.some((m) => m.codigo === "cafe_manha"));
 });
 
 test("sem data não entra como analisada", () => {
