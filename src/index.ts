@@ -6,7 +6,6 @@ import { lerCnae } from "./cnae.ts";
 import { UFS, torito, type Regra } from "./torito.ts";
 import { torita, type Entrada } from "./torita.ts";
 import { toritoPagina } from "./torito-pagina.ts";
-import { movimentoPagina } from "./movimento-pagina.ts";
 import { logoTorita } from "./logo-torita.ts";
 import { linhas } from "./visoes.ts";
 
@@ -135,7 +134,7 @@ async function responder(request: Request, env: Env): Promise<Response> {
       return new Response(painelCnae(estado, numero, lido.linha, lido.artigo), { headers: cabecalhos.html });
     }
     if (request.method === "GET" && (url.pathname === "/movimento" || url.pathname === "/torito")) {
-      return new Response(movimentoPagina, { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
+      return new Response(toritoPagina, { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
     }
     if (request.method === "GET" && url.pathname === "/torita-marca") {
       const b64 = logoTorita.split(",")[1] ?? "";
