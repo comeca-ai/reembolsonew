@@ -13,6 +13,7 @@ function textoDaSaida(saida: unknown): string {
   if (!saida || typeof saida !== "object") return "";
   const o = saida as Record<string, unknown>;
   if (typeof o.response === "string") return o.response;
+  if (o.response && typeof o.response === "object") return JSON.stringify(o.response);
   if (typeof o.description === "string") return o.description;
   const result = o.result;
   if (result && typeof result === "object" && typeof (result as Record<string, unknown>).response === "string") {
