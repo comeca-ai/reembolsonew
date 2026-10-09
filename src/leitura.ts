@@ -102,6 +102,14 @@ function tokens(texto: string): Set<string> {
   );
 }
 
+export function resumoLeitura(texto: string, hoje: string): string {
+  const nota = deLeitura(texto, hoje);
+  const estabelecimento = campo(texto, "estabelecimento");
+  const valor = nota.valorCentavos == null ? null : `R$ ${(nota.valorCentavos / 100).toFixed(2).replace(".", ",")}`;
+  const partes = [estabelecimento, valor, nota.dataEmissao].filter((p): p is string => Boolean(p));
+  return partes.length ? partes.join(" · ") : "A leitura não trouxe valor.";
+}
+
 export function deLeitura(texto: string, hoje: string): Comprovante {
   const o = jsonDe(texto);
   const valorBruto = str(o.valor) ?? campo(texto, "valor");

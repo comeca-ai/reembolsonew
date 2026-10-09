@@ -1,5 +1,5 @@
 import { exemplos } from "./exemplos.ts";
-import { deLeitura, lerImagem } from "./leitura.ts";
+import { deLeitura, lerImagem, resumoLeitura } from "./leitura.ts";
 import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 
@@ -233,7 +233,7 @@ async function responder(request: Request, env: Env): Promise<Response> {
       const lida = await lerImagem(env.AI, bytes, foto.type);
       const texto = lida.texto;
       const nota = deLeitura(texto, dataSaoPaulo(new Date()));
-      const leitura = texto.trim() ? texto.slice(0, 280) : lida.erro ?? "A leitura não trouxe valor.";
+      const leitura = texto.trim() ? resumoLeitura(texto, dataSaoPaulo(new Date())) : lida.erro ?? "A leitura não trouxe valor.";
       const anterior = cookieDe(request, "hash");
       const codigo = !hash ? "sem_base" : anterior === hash ? "duplicada" : texto.trim() ? "limpa" : "sem_base";
       const barra = codigo === "duplicada";

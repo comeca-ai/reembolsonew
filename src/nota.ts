@@ -174,14 +174,8 @@ export function decisao(
   const tom = j.status === "aprovada" ? "pine" : j.status === "excedente_vp" ? "" : "clay";
   const motivo = extra ?? j.motivos[0]?.texto ?? j.mensagem;
   const valor = j.valorReembolsavelCentavos == null ? "" : `<p class="valor">${esc(brl(j.valorReembolsavelCentavos))}</p>`;
-  const lista = j.motivos.map((m) => `<li>${esc(m.texto)}</li>`).join("");
   const passos = trilha
-    ? `<ol class="risco">
-  <li><span>Leitura</span><p>${esc(trilha.leitura)}</p></li>
-  <li><span>Torita</span><p>${esc(trilha.torita)}</p></li>
-  <li><span>Política</span><p>${esc(j.mensagem)}</p></li>
-  ${trilha.fiscal ? `<li><span>Torito</span><p>${esc(trilha.fiscal)}</p></li>` : ""}
-</ol>`
+    ? `<p>${esc(trilha.leitura)}</p><p>${esc(trilha.torita)}</p>${trilha.fiscal ? `<p>${esc(trilha.fiscal)}</p>` : ""}`
     : "";
   return pagina(
     palavra(j.status),
@@ -190,8 +184,6 @@ export function decisao(
   <h1 class="${tom}">${palavra(j.status)}</h1>
   <p class="motivo">${esc(motivo)}</p>
   ${valor}
-  <p class="linha">${esc(j.politica.nome)}</p>
-  ${lista ? `<ul>${lista}</ul>` : ""}
   ${passos}
 </article>
 <a class="ir" href="/enviar">Enviar outra</a>`,
