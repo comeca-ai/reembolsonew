@@ -69,6 +69,9 @@ const estilo = `<link rel="preconnect" href="https://fonts.googleapis.com">
   main ol:not(.passos) li { margin: 0.55rem 0; }
   .risco { list-style: none; padding: 0; }
   .risco li { display:grid; grid-template-columns: 8.5rem 1fr; gap:12px; border-bottom:1px solid var(--line); padding:16px 0; }
+  .abas { display:flex; gap:8px; margin:0 0 28px; }
+  .abas a { height:40px; display:inline-flex; align-items:center; padding:0 14px; border:1px solid var(--line); border-radius:4px; color:var(--muted); text-decoration:none; font: 500 14px/1 Outfit, sans-serif; }
+  .abas a[aria-current="page"] { color:var(--ink); border-color:var(--ink); }
 </style>`;
 
 export function casca(titulo: string, corpo: string, atual = "/"): string {
