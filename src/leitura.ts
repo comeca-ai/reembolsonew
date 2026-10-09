@@ -67,6 +67,21 @@ function str(v: unknown): string | null {
   return t && t !== "null" ? t : null;
 }
 
+function campo(texto: string, nome: string): string | null {
+  const limpo = texto.replace(/\*/g, "");
+  const achado = limpo.match(new RegExp(`${nome}\\s*:\\s*([^\\n]+)`, "i"));
+  if (!achado) return null;
+  const valor = achado[1].trim();
+  return valor && valor.toLowerCase() !== "null" ? valor : null;
+}
+
+function dataDe(bruto: string | null): string | null {
+  if (!bruto) return null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(bruto)) return bruto;
+  const br = bruto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  return br ? `${br[3]}-${br[2]}-${br[1]}` : null;
+}
+
 function centavos(bruto: string | null): number | null {
   if (!bruto) return null;
   const limpo = bruto.replace(/\s/g, "").replace(/^R\$/i, "");
@@ -88,6 +103,9 @@ function tokens(texto: string): Set<string> {
 
 export function deLeitura(texto: string, hoje: string): Comprovante {
   const o = jsonDe(texto);
+  const valorBruto = str(o.valor) ?? campo(texto, "valor");
+  const dataBruta = str(o.data) ?? campo(texto, "data");
+  const pagamentoBruto = str(o.pagamento) ?? campo(texto, "pagamento")?.toLowerCase() ?? null;
   const escrito = tokens(texto);
   const meio: MeioTaxi | null = escrito.has("uber")
     ? "uber"
@@ -116,18 +134,16 @@ export function deLeitura(texto: string, hoje: string): Comprovante {
         : escrito.has("pedagio")
           ? "pedagio"
           : "outro";
-  const pagamentoBruto = str(o.pagamento);
   const pagamento: Pagamento | null =
     pagamentoBruto === "pix" || pagamentoBruto === "dinheiro" || pagamentoBruto === "debito" || pagamentoBruto === "credito" || pagamentoBruto === "app"
       ? pagamentoBruto
       : null;
-  const data = str(o.data);
   return {
     tipo,
-    valorCentavos: centavos(str(o.valor)),
-    dataEmissao: data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : null,
-    documentoFiscal: o.documentoFiscal === true,
-    temCnpj: o.temCnpj === true || Boolean(str(o.cnpj)),
+    valorCentavos: centavos(valorBruto),
+    dataEmissao: dataDe(dataBruta),
+    documentoFiscal: o.documentoFiscal === true || /nfc-?e|cupom fiscal|nota fiscal/i.test(texto),
+    temCnpj: o.temCnpj === true || Boolean(str(o.cnpj) ?? campo(texto, "cnpj")),
     nomeNoComprovante: str(o.nome),
     pagamento,
     meioTaxi: meio,

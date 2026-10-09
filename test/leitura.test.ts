@@ -21,3 +21,11 @@ test("valor 18,00 do modelo entra como centavos", () => {
   assert.equal(nota.dataEmissao, "2026-10-08");
   assert.equal(nota.ocasiao, "jantar");
 });
+
+test("texto do modelo com Valor e Data entra no julgamento", () => {
+  const nota = deLeitura("* **Valor:** 18,00\n* **Data:** 2026-10-08\n* **Pagamento:** dinheiro\njantar\nNFC-e", "2026-10-09");
+  assert.equal(nota.valorCentavos, 1800);
+  assert.equal(nota.dataEmissao, "2026-10-08");
+  assert.equal(nota.documentoFiscal, true);
+  assert.equal(nota.pagamento, "dinheiro");
+});
