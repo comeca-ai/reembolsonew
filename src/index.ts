@@ -212,6 +212,15 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
 
 export default {
   async fetch(request: Request): Promise<Response> {
+    if (request.method === "HEAD") {
+      const get = await responder(new Request(request.url, { method: "GET", headers: request.headers }));
+      return new Response(null, { status: get.status, headers: get.headers });
+    }
+    return responder(request);
+  },
+};
+
+async function responder(request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/") {
       return new Response(inicio, { headers: cabecalhos.html });
@@ -259,5 +268,4 @@ export default {
       }
     }
     return json({ erro: "não encontrado" }, 404);
-  },
-};
+}
