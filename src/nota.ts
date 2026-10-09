@@ -14,6 +14,7 @@ function menu(atual: string): string {
     ["/fraude", "Fraude"],
     ["/torito", "Torito"],
     ["/cnae", "CNAE"],
+    ["/movimento", "Movimento"],
   ];
   return `<nav>${itens
     .map(([href, nome]) => `<a href="${href}"${href === atual ? ' aria-current="page"' : ""}>${nome}</a>`)

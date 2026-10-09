@@ -3,6 +3,7 @@ import { deLeitura, lerImagem, resumoLeitura } from "./leitura.ts";
 import { casca, decisao, formulario, fraude, FRASE, lerNota, painelCnae, painelTorito, resultadoVazio } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 import { lerCnae } from "./cnae.ts";
+import { movimento } from "./movimento.ts";
 import { UFS, torito, type Regra } from "./torito.ts";
 
 const inicio = casca(
@@ -128,6 +129,9 @@ async function responder(request: Request, env: Env): Promise<Response> {
       const estado = url.searchParams.get("c") ? lido.estado : "Ver o CNAE";
       const numero = url.searchParams.get("c") ? lido.cnae : "—";
       return new Response(painelCnae(estado, numero, lido.linha, lido.artigo), { headers: cabecalhos.html });
+    }
+    if (request.method === "GET" && url.pathname === "/movimento") {
+      return new Response(movimento, { headers: cabecalhos.html });
     }
     if (request.method === "GET" && url.pathname === "/torito") {
       const uf = url.searchParams.get("uf")?.toUpperCase() ?? "SP";
