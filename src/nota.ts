@@ -25,11 +25,10 @@ const estilo = `<link rel="preconnect" href="https://fonts.googleapis.com">
   :root { color-scheme: light; --ink:#1c1915; --paper:#f3efe6; --card:#faf7f1; --line:#e4dac8; --pine:#1b6b43; --clay:#8d3b28; --muted:#5c564c; }
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.5 Outfit, ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
-  header, main { max-width: 48rem; margin: 0 auto; padding: 28px 20px 0; }
-  main { padding-top: 12px; padding-bottom: 96px; }
-  .olho, .marca { margin:0; font: 12px/1 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .14em; color: var(--muted); }
-  header h1 { margin: 10px 0 0; font: 500 2.4rem/1 Fraunces, Georgia, serif; }
-  main h1 { margin: 12px 0 0; font: 500 3.4rem/0.95 Fraunces, Georgia, serif; max-width: 16ch; }
+  header, main { max-width: 28rem; margin: 0 auto; padding: 20px 20px 0; }
+  main { padding-top: 28px; padding-bottom: 96px; }
+  header h1 { display: none; }
+  main h1, .estado { margin: 0; font: 500 2.75rem/1 Fraunces, Georgia, serif; }
   .muted { color: var(--muted); max-width: 36rem; }
   nav { display:flex; gap: 4px; }
   nav a { color: var(--muted); text-decoration: none; font: 500 14px/1 Outfit, sans-serif; height: 48px; display:inline-flex; align-items:center; padding: 0 10px; border-bottom: 2px solid transparent; }
@@ -42,14 +41,14 @@ const estilo = `<link rel="preconnect" href="https://fonts.googleapis.com">
     header nav { display:flex; margin-top: 8px; }
     .dock { display:none; }
     main { padding-bottom: 64px; }
-    main h1 { font-size: 4.5rem; }
+    main h1, .estado { font-size: 2.75rem; }
   }
   label { display:grid; gap:6px; margin:0 0 14px; font-size:14px; color:var(--muted); }
   input, select { height:48px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); padding:0 12px; font:inherit; }
   button, a.ir { display:inline-flex; align-items:center; height:48px; margin-top:20px; padding:0 18px; border:0; border-radius:4px; background:var(--ink); color:var(--paper); font: 500 14px/1 Outfit, sans-serif; text-decoration:none; }
   .pine { color:var(--pine); }
   .clay { color:var(--clay); }
-  .estado { margin: 0; font: 500 3.4rem/1 Fraunces, Georgia, serif; }
+  .estado { margin: 0; font: 500 2.75rem/1 Fraunces, Georgia, serif; }
   .numero { margin: 0.75rem 0 0; font: 500 1.75rem/1 Fraunces, Georgia, serif; }
   .contexto { margin: 0.5rem 0 0; color: var(--muted); }
   .efeito { margin: 1.25rem 0 0; font-size: 1.15rem; }
@@ -78,8 +77,6 @@ export function casca(titulo: string, corpo: string, atual = "/"): string {
 <title>${titulo}</title>
 ${estilo}
 <header>
-  <p class="olho">ANOTA SEM VOLTA</p>
-  <h1>Anota sem volta</h1>
   ${nav}
 </header>
 <main>
@@ -100,21 +97,19 @@ export function formulario(bloqueado: boolean): string {
   if (bloqueado) {
     return pagina(
       "Enviar nota",
-      `<p class="olho">NOTA</p>
-<h1>Ainda não</h1>
-<p>A empresa precisa aprovar a política antes da nota.</p>
-<a class="ir" href="/politica">Voltar para a política</a>`,
+      `<p class="estado">Ainda não</p>
+<p class="contexto">A política não foi aprovada.</p>
+<p class="efeito">Sem Pix.</p>
+<a class="ir" href="/politica">Aprovar</a>`,
       "/enviar",
     );
   }
   return pagina(
     "Enviar nota",
-    `<p class="marca">NOTA</p>
-<h1>Enviar</h1>
-<p>Sobe a foto. A leitura sai da imagem. Não peça finalidade. A data e a hora ficam no servidor. A foto não fica guardada.</p>
+    `<p class="estado">Enviar a nota</p>
 <form method="post" action="/enviar" enctype="multipart/form-data">
-  <label class="foto">Foto da nota
-    <span>JPG ou PNG</span>
+  <label class="foto">Foto
+    <span>A leitura sai da imagem.</span>
     <input name="foto" type="file" accept="image/*" required>
   </label>
   <button type="submit">Enviar</button>
@@ -249,9 +244,9 @@ export function fraude(): string {
 export function resultadoVazio(): string {
   return pagina(
     "Resultado",
-    `<p class="marca">RESULTADO</p>
-<h1>Nenhuma nota ainda.</h1>
-<a class="ir" href="/enviar">Enviar uma nota</a>`,
+    `<p class="estado">Nenhuma nota</p>
+<p class="efeito">Sem Pix.</p>
+<a class="ir" href="/enviar">Enviar a nota</a>`,
     "/eu",
   );
 }

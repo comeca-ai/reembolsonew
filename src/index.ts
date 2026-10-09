@@ -5,22 +5,15 @@ import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 
 const inicio = casca(
   "Anota sem volta",
-  `<h1>A nota não volta sem a regra.</h1>
-<p class="muted">Primeiro a política. A empresa lê o resumo e aprova. Depois a nota. O que não está escrito não entra.</p>
-<a class="ir" href="/politica">Começar</a>
-<ol class="passos">
-  <li><a href="/politica"><span class="n">01</span><span>A empresa sobe a política.</span></a></li>
-  <li><a href="/resumo"><span class="n">02</span><span>Aprova só o que está escrito.</span></a></li>
-  <li><a href="/enviar"><span class="n">03</span><span>A nota entra. A regra decide.</span></a></li>
-</ol>`,
+  `<p class="estado">Subir a política</p>
+<p class="contexto">A nota só entra depois disso.</p>
+<a class="ir" href="/politica">Subir</a>`,
   "/",
 );
 
 const subir = casca(
   "Subir política",
-  `<p class="olho">1 · POLÍTICA</p>
-<h1>Subir a política</h1>
-<p class="muted">O arquivo chega inteiro. O resumo é o que o motor já aplica, não uma leitura do PDF.</p>
+  `<p class="estado">Subir a política</p>
 <form method="post" action="/politica" enctype="multipart/form-data">
   <input type="file" name="arquivo" accept=".pdf,.txt,application/pdf,text/plain" required>
   <button type="submit">Subir</button>
@@ -93,16 +86,14 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
   const arquivoLinha = arquivo ? `<p>Arquivo recebido: ${esc(arquivo)}. O PDF não foi lido.</p>` : "";
   const acao = aprovada
     ? `<p><strong>A empresa aprovou esta versão.</strong></p><p><a href="/enviar">Continuar para a nota</a></p>`
-    : `<form method="post" action="/politica/aprovar"><button type="submit">Aprovar e ver a nota</button></form>`;
+    : `<form method="post" action="/politica/aprovar"><button type="submit">Aprovar</button></form>`;
   return casca(
     "Resumo da política",
-    `<p class="olho">${esc(POLITICA.empresa)} · ${esc(POLITICA.emissao)}</p>
-<h1>Resumo para aprovar</h1>
-<p class="muted">${esc(POLITICA.nome)}</p>
+    `<p class="estado">${aprovada ? "Aprovada" : "Aprovar"}</p>
+<p class="contexto">política ${esc(POLITICA.emissao)}</p>
 ${arquivoLinha}
-<ol>${lista}</ol>
 ${acao}
-<p><a href="/politica">Subir outra</a></p>`,
+<details><summary>Regras</summary><ol>${lista}</ol></details>`,
     "/politica",
   );
 }
