@@ -293,6 +293,7 @@ async function responder(request: Request, env: Env): Promise<Response> {
         return json({ ia: false, erro: e instanceof Error ? e.message : "modelo não respondeu" }, 502);
       }
     }
+    if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, politica: POLITICA.emissao });
     }
     if (request.method === "GET" && url.pathname === "/api/exemplos") return json(exemplos);
