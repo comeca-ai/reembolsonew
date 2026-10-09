@@ -4,9 +4,10 @@ import { casca, decisao, formulario, fraude, FRASE, lerNota, painelCnae, resulta
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 import { lerCnae } from "./cnae.ts";
 import { movimento } from "./movimento.ts";
-import { torito, type Regra } from "./torito.ts";
+import { UFS, torito, type Regra } from "./torito.ts";
 import { torita, type Entrada } from "./torita.ts";
 import { toritoPagina } from "./torito-pagina.ts";
+import { linhas } from "./visoes.ts";
 
 const inicio = casca(
   "Anota sem volta",
@@ -266,6 +267,30 @@ async function responder(request: Request, env: Env): Promise<Response> {
     }
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, politica: POLITICA.emissao });
+    }
+    if (request.method === "GET" && url.pathname === "/api") {
+      return json({
+        servicos: [
+          { nome: "politica", metodo: "GET", caminho: "/api/politica" },
+          { nome: "reembolso", metodo: "POST", caminho: "/api/julgar" },
+          { nome: "torita", metodo: "POST", caminho: "/api/torita" },
+          { nome: "torito", metodo: "POST", caminho: "/api/torito" },
+          { nome: "cnae", metodo: "GET", caminho: "/api/cnae" },
+          { nome: "visoes", metodo: "GET", caminho: "/api/visoes" },
+          { nome: "ufs", metodo: "GET", caminho: "/api/ufs" },
+        ],
+      });
+    }
+    if (request.method === "GET" && url.pathname === "/api/cnae") {
+      return json(lerCnae(url.searchParams.get("c") ?? ""));
+    }
+    if (request.method === "GET" && url.pathname === "/api/visoes") {
+      const pedido = url.searchParams.get("p");
+      const aba = pedido === "abder" ? "abder" : "stefanini";
+      return json({ politica: aba, linhas: linhas(aba) });
+    }
+    if (request.method === "GET" && url.pathname === "/api/ufs") {
+      return json({ ufs: UFS });
     }
     if (request.method === "GET" && url.pathname === "/api/exemplos") return json(exemplos);
     if (request.method === "GET" && url.pathname === "/api/politica") return json(POLITICA);
