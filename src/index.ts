@@ -4,9 +4,9 @@ import { casca, decisao, formulario, fraude, FRASE, lerNota, painelCnae, resulta
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 import { lerCnae } from "./cnae.ts";
 import { movimento } from "./movimento.ts";
-import { UFS, torito, type Regra } from "./torito.ts";
+import { torito, type Regra } from "./torito.ts";
 import { torita, type Entrada } from "./torita.ts";
-import { corpoVisoes, type Aba } from "./visoes.ts";
+import { toritoPagina } from "./torito-pagina.ts";
 
 const inicio = casca(
   "Anota sem volta",
@@ -136,9 +136,7 @@ async function responder(request: Request, env: Env): Promise<Response> {
       return new Response(movimento, { headers: cabecalhos.html });
     }
     if (request.method === "GET" && url.pathname === "/torito") {
-      const pedido = url.searchParams.get("p");
-      const aba: Aba = pedido === "abder" ? "abder" : "stefanini";
-      return new Response(casca("Torito", corpoVisoes(aba, UFS), "/torito"), { headers: cabecalhos.html });
+      return new Response(toritoPagina, { headers: cabecalhos.html });
     }
     if (request.method === "POST" && url.pathname === "/api/torito") {
       const bruto = await request.text();
