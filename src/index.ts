@@ -136,6 +136,11 @@ async function responder(request: Request, env: Env): Promise<Response> {
     if (request.method === "GET" && (url.pathname === "/movimento" || url.pathname === "/torito")) {
       return new Response(toritoPagina, { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
     }
+    if (request.method === "GET" && url.pathname === "/torita-marca") {
+      const b64 = logoTorita.split(",")[1] ?? "";
+      const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+      return new Response(bytes, { headers: { "content-type": "image/jpeg", "cache-control": "no-store" } });
+    }
     if (request.method === "GET" && url.pathname === "/torita") {
       const pagina = `<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Torita</title><body style="margin:0;background:#12100d;min-height:100vh;display:grid;place-items:center"><img alt="Logo da Torita" src="${logoTorita}" style="width:min(92vw,640px);height:auto"></body>`;
       return new Response(pagina, { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
