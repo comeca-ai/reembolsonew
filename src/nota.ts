@@ -12,6 +12,7 @@ function menu(atual: string): string {
     ["/enviar", "Enviar"],
     ["/eu", "Resultado"],
     ["/fraude", "Fraude"],
+    ["/torito", "Torito"],
   ];
   return `<nav>${itens
     .map(([href, nome]) => `<a href="${href}"${href === atual ? ' aria-current="page"' : ""}>${nome}</a>`)
@@ -229,6 +230,21 @@ export const FRASE = {
   fora_do_padrao: "Valor acima do histórico mínimo deste telefone.",
   limpa: "Nenhum teste positivo.",
 } as const;
+
+export function painelTorito(uf: string, passosUf: string[], ufs: readonly string[]): string {
+  const lista = passosUf.map((passo) => `<li>${esc(passo)}</li>`).join("");
+  return pagina(
+    "Torito",
+    `<p class="estado">Sem crédito</p>
+<p class="numero">${esc(uf)}</p>
+<p class="contexto">Sem artigo na base.</p>
+<p class="efeito">O Pix não muda.</p>
+<ol>${lista}</ol>
+<details><summary>UFs</summary><p>${ufs.map((item) => esc(item)).join(" · ")}</p></details>
+<footer>torito · sem decisão</footer>`,
+    "/torito",
+  );
+}
 
 export function fraude(): string {
   return pagina(

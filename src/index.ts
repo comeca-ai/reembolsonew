@@ -1,7 +1,8 @@
 import { exemplos } from "./exemplos.ts";
 import { deLeitura, lerImagem, resumoLeitura } from "./leitura.ts";
-import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio, casca } from "./nota.ts";
+import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio, casca, painelTorito } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
+import { UFS, passos, recuperavel } from "./torito.ts";
 
 const inicio = casca(
   "Anota sem volta",
@@ -121,6 +122,11 @@ async function responder(request: Request, env: Env): Promise<Response> {
     if (request.method === "GET" && (url.pathname === "/nota" || url.pathname === "/enviar")) {
       return new Response(formulario(!empresaAprovou(request)), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
     }
+    if (request.method === "GET" && url.pathname === "/torito") {
+      const uf = url.searchParams.get("uf")?.toUpperCase() ?? "SP";
+      const escolhida = (UFS as readonly string[]).includes(uf) ? uf : "SP";
+      return new Response(painelTorito(escolhida, passos(escolhida), UFS), { headers: cabecalhos.html });
+    }
     if (request.method === "GET" && url.pathname === "/fraude") {
       return new Response(fraude(), { headers: cabecalhos.html });
     }
@@ -168,7 +174,7 @@ async function responder(request: Request, env: Env): Promise<Response> {
         const motivo = lida.erro ?? "Não leu o documento.";
         j = { ...j, status: "nao_lida", mensagem: "Não lida.", motivos: [{ codigo: "nao_leu", texto: motivo }], valorReembolsavelCentavos: null };
       }
-      const fiscal = j.status === "aprovada" ? "sem crédito" : null;
+      const fiscal = j.status === "aprovada" ? recuperavel(null).linha : null;
       const html = decisao(j, j.motivos[0]?.texto ?? null, {
         leitura,
         torita: duplicada ? `duplicada. ${FRASE.duplicada}` : null,
