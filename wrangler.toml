@@ -4,5 +4,13 @@ compatibility_date = "2026-10-09"
 account_id = "749b2e9b3642e4b03321d5830e81c195"
 workers_dev = true
 
+[[routes]]
+pattern = "anotasemvolta.com.br"
+custom_domain = true
+
+[[routes]]
+pattern = "www.anotasemvolta.com.br"
+custom_domain = true
+
 [observability]
 enabled = true
