@@ -3,7 +3,6 @@ import { deLeitura, lerImagem, resumoLeitura } from "./leitura.ts";
 import { casca, decisao, formulario, fraude, FRASE, lerNota, painelCnae, resultadoVazio } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 import { lerCnae } from "./cnae.ts";
-import { movimento } from "./movimento.ts";
 import { UFS, torito, type Regra } from "./torito.ts";
 import { torita, type Entrada } from "./torita.ts";
 import { toritoPagina } from "./torito-pagina.ts";
@@ -133,11 +132,8 @@ async function responder(request: Request, env: Env): Promise<Response> {
       const numero = url.searchParams.get("c") ? lido.cnae : "—";
       return new Response(painelCnae(estado, numero, lido.linha, lido.artigo), { headers: cabecalhos.html });
     }
-    if (request.method === "GET" && url.pathname === "/movimento") {
-      return new Response(movimento, { headers: cabecalhos.html });
-    }
-    if (request.method === "GET" && url.pathname === "/torito") {
-      return new Response(toritoPagina, { headers: cabecalhos.html });
+    if (request.method === "GET" && (url.pathname === "/movimento" || url.pathname === "/torito")) {
+      return new Response(toritoPagina, { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
     }
     if (request.method === "POST" && url.pathname === "/api/torito") {
       const bruto = await request.text();
