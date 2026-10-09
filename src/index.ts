@@ -1,5 +1,5 @@
 import { exemplos } from "./exemplos.ts";
-import { decisao, formulario, lerNota } from "./nota.ts";
+import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 
 const inicio = `<!doctype html>
@@ -27,8 +27,9 @@ const inicio = `<!doctype html>
   <nav>
     <a href="/">Início</a>
     <a href="/politica">Política</a>
-    <a href="/resumo">Resumo</a>
-    <a href="/nota">Nota</a>
+    <a href="/enviar">Enviar</a>
+    <a href="/eu">Resultado</a>
+    <a href="/fraude">Fraude</a>
   </nav>
   <p class="marca">ANOTA SEM VOLTA</p>
   <h1>A nota não volta sem a regra.</h1>
@@ -37,7 +38,7 @@ const inicio = `<!doctype html>
   <ol>
     <li><a href="/politica"><span class="n">01</span><span>A empresa sobe a política.</span></a></li>
     <li><a href="/resumo"><span class="n">02</span><span>Aprova só o que está escrito.</span></a></li>
-    <li><a href="/nota"><span class="n">03</span><span>A nota entra. A regra decide.</span></a></li>
+    <li><a href="/enviar"><span class="n">03</span><span>A nota entra. A regra decide.</span></a></li>
   </ol>
 </main>`;
 
@@ -99,6 +100,11 @@ function empresaAprovou(request: Request): boolean {
   return cookieDe(request, "politica") === POLITICA.emissao;
 }
 
+async function sha256(bytes: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 function cookieDe(request: Request, nome: string): string | null {
   const cookie = request.headers.get("cookie") ?? "";
   for (const parte of cookie.split(";")) {
@@ -133,7 +139,7 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
   const lista = itens.map((item) => `<li>${esc(item)}</li>`).join("");
   const arquivoLinha = arquivo ? `<p>Arquivo recebido: ${esc(arquivo)}. O PDF não foi lido.</p>` : "";
   const acao = aprovada
-    ? `<p><strong>A empresa aprovou esta versão.</strong></p><p><a href="/nota">Continuar para a nota</a></p>`
+    ? `<p><strong>A empresa aprovou esta versão.</strong></p><p><a href="/enviar">Continuar para a nota</a></p>`
     : `<form method="post" action="/politica/aprovar"><button type="submit">Aprovar e ver a nota</button></form>`;
   return `<!doctype html>
 <html lang="pt-BR">
@@ -162,7 +168,7 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
   ${arquivoLinha}
   <ol>${lista}</ol>
   ${acao}
-  <p><a href="/politica">Subir outra</a> · <a href="/nota">Ver a nota</a></p>
+  <p><a href="/politica">Subir outra</a> · <a href="/enviar">Enviar a nota</a></p>
 </main>`;
 }
 
@@ -184,14 +190,61 @@ async function responder(request: Request): Promise<Response> {
     if (request.method === "GET" && url.pathname === "/politica") {
       return new Response(subir, { headers: cabecalhos.html });
     }
-    if (request.method === "GET" && url.pathname === "/nota") {
-      return new Response(formulario(), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
+    if (request.method === "GET" && (url.pathname === "/nota" || url.pathname === "/enviar")) {
+      return new Response(formulario(!empresaAprovou(request)), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
     }
-    if (request.method === "POST" && url.pathname === "/nota") {
+    if (request.method === "GET" && url.pathname === "/fraude") {
+      return new Response(fraude(), { headers: cabecalhos.html });
+    }
+    if (request.method === "GET" && url.pathname === "/eu") {
+      const ultima = cookieDe(request, "ultima");
+      if (!ultima) return new Response(resultadoVazio(), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
+      try {
+        const salvo = JSON.parse(ultima) as { status: "aprovada" | "barrada" | "nao_lida" | "excedente_vp"; mensagem: string; motivo: string; valor: number | null };
+        return new Response(
+          decisao({
+            status: salvo.status,
+            mensagem: salvo.mensagem,
+            motivos: salvo.motivo ? [{ codigo: "salvo", texto: salvo.motivo }] : [],
+            conforme: [],
+            valorReembolsavelCentavos: salvo.valor,
+            politica: { nome: POLITICA.nome, empresa: POLITICA.empresa, emissao: POLITICA.emissao },
+          }),
+          { headers: { ...cabecalhos.html, "cache-control": "no-store" } },
+        );
+      } catch {
+        return new Response(resultadoVazio(), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
+      }
+    }
+    if (request.method === "POST" && (url.pathname === "/nota" || url.pathname === "/enviar")) {
+      if (!empresaAprovou(request)) {
+        return new Response(formulario(true), { status: 403, headers: cabecalhos.html });
+      }
       const form = await request.formData();
+      const foto = form.get("foto");
+      if (!(foto instanceof File) || foto.size === 0) {
+        return new Response("Falta a foto da nota.", { status: 400, headers: cabecalhos.html });
+      }
+      const hash = await sha256(await foto.arrayBuffer());
       const lida = lerNota(form, dataSaoPaulo(new Date()));
       if (!lida.ok) return new Response(lida.erro, { status: 400, headers: cabecalhos.html });
-      return new Response(decisao(julgar(lida.nota)), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
+      const anterior = cookieDe(request, "hash");
+      const codigo = !hash ? "sem_base" : anterior === hash ? "duplicada" : "limpa";
+      let j = julgar(lida.nota);
+      if (codigo === "duplicada") {
+        j = { ...j, status: "barrada", mensagem: `Barrada. ${FRASE.duplicada}`, motivos: [{ codigo, texto: FRASE.duplicada }, ...j.motivos], valorReembolsavelCentavos: null };
+      }
+      const html = decisao(j, codigo === "limpa" ? null : FRASE[codigo]);
+      const headers = new Headers({ ...cabecalhos.html, "cache-control": "no-store" });
+      headers.append("set-cookie", `hash=${hash}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`);
+      const curto = encodeURIComponent(JSON.stringify({
+        status: j.status,
+        mensagem: j.mensagem,
+        motivo: j.motivos[0]?.texto ?? "",
+        valor: j.valorReembolsavelCentavos,
+      }));
+      headers.append("set-cookie", `ultima=${curto}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`);
+      return new Response(html, { headers });
     }
     if (request.method === "GET" && url.pathname === "/resumo") {
       return new Response(resumo(cookieDe(request, "arquivo"), empresaAprovou(request)), {
@@ -199,7 +252,7 @@ async function responder(request: Request): Promise<Response> {
       });
     }
     if (request.method === "POST" && url.pathname === "/politica/aprovar") {
-      return ir("/nota", [`politica=${POLITICA.emissao}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`]);
+      return ir("/enviar", [`politica=${POLITICA.emissao}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`]);
     }
     if (request.method === "POST" && url.pathname === "/politica") {
       const form = await request.formData();

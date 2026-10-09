@@ -5,13 +5,17 @@ const PAGAMENTOS: Pagamento[] = ["dinheiro", "debito", "credito", "pix", "app", 
 const MEIOS: MeioTaxi[] = ["uber", "99", "cabify", "easy", "convencional"];
 const OCASIOES: Ocasiao[] = ["cafe", "almoco", "jantar"];
 
-function menu(): string {
-  return `<nav>
-    <a href="/">Início</a>
-    <a href="/politica">Política</a>
-    <a href="/resumo">Resumo</a>
-    <a href="/nota">Nota</a>
-  </nav>`;
+function menu(atual: string): string {
+  const itens = [
+    ["/", "Início"],
+    ["/politica", "Política"],
+    ["/enviar", "Enviar"],
+    ["/eu", "Resultado"],
+    ["/fraude", "Fraude"],
+  ];
+  return `<nav>${itens
+    .map(([href, nome]) => `<a href="${href}"${href === atual ? ' aria-current="page"' : ""}>${nome}</a>`)
+    .join("")}</nav>`;
 }
 
 const estilo = `<style>
@@ -29,11 +33,17 @@ const estilo = `<style>
   button, a.ir { display:inline-flex; align-items:center; height:48px; margin-top:12px; padding:0 18px; border:0; border-radius:8px; background:var(--ink); color:var(--paper); font:inherit; text-decoration:none; }
   .pine { color:var(--pine); }
   .clay { color:var(--clay); }
-  .valor { font:500 2.4rem/1 Georgia, serif; }
+  .valor { margin-top:1.2rem; font:500 2.4rem/1 Georgia, serif; }
+  .motivo { margin:1.2rem 0 0; font:500 1.6rem/1.2 Georgia, serif; color:var(--ink); }
+  .cartao { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px; }
+  .marca { font:12px/1 ui-monospace, monospace; letter-spacing:.12em; color:var(--muted); }
+  .risco { list-style:none; padding:0; }
+  .risco li { display:grid; grid-template-columns:9rem 1fr; gap:12px; border-bottom:1px solid var(--line); padding:14px 0; }
+  nav a[aria-current="page"] { border-bottom:2px solid var(--ink); }
   li { margin:0.4rem 0; }
 </style>`;
 
-function pagina(titulo: string, corpo: string): string {
+function pagina(titulo: string, corpo: string, atual = "/enviar"): string {
   return `<!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
@@ -41,7 +51,7 @@ function pagina(titulo: string, corpo: string): string {
 <title>${titulo}</title>
 ${estilo}
 <main>
-${menu()}
+${menu(atual)}
 ${corpo}
 </main>`;
 }
@@ -50,24 +60,40 @@ function opcoes(valores: readonly string[], rotulos: Record<string, string>): st
   return valores.map((v) => `<option value="${v}">${rotulos[v] ?? v}</option>`).join("");
 }
 
-export function formulario(): string {
+export function formulario(bloqueado: boolean): string {
+  if (bloqueado) {
+    return pagina(
+      "Enviar nota",
+      `<p class="marca">NOTA</p>
+<h1>Ainda não</h1>
+<p>A empresa precisa aprovar a política antes da nota.</p>
+<a class="ir" href="/politica">Voltar para a política</a>`,
+      "/enviar",
+    );
+  }
   return pagina(
     "Enviar nota",
-    `<p>Nota</p>
-<h1>Enviar a nota</h1>
-<p>O que você escreve entra no algoritmo. O que ficar em branco, a regra trata como ausente.</p>
-<form method="post" action="/nota">
+    `<p class="marca">NOTA</p>
+<h1>Enviar</h1>
+<p>Sobe a foto. Escreve só o que está nela. A data e a hora ficam no servidor. A foto não fica guardada.</p>
+<form method="post" action="/enviar" enctype="multipart/form-data">
+  <label>Foto da nota
+    <input name="foto" type="file" accept="image/*,.pdf" required>
+  </label>
   <label>Tipo
     <select name="tipo" required>
       <option value="">Escolha</option>
       ${opcoes(TIPOS, { taxi: "Táxi", refeicao: "Refeição", estacionamento: "Estacionamento", pedagio: "Pedágio", transporte: "Transporte", outro: "Outro" })}
     </select>
   </label>
+  <label>Estabelecimento
+    <input name="estabelecimento" autocomplete="off">
+  </label>
+  <label>CNPJ
+    <input name="cnpj" inputmode="numeric" autocomplete="off">
+  </label>
   <label>Valor
     <input name="valor" inputmode="decimal" placeholder="20,00" required>
-  </label>
-  <label>Data de emissão
-    <input name="dataEmissao" type="date">
   </label>
   <label>Nome no comprovante
     <input name="nomeNoComprovante" autocomplete="name">
@@ -87,17 +113,14 @@ export function formulario(): string {
       ${opcoes(MEIOS, { uber: "Uber", "99": "99", cabify: "Cabify", easy: "Easy Táxi", convencional: "Convencional" })}
     </select>
   </label>
-  <label>Ocasião, se for refeição
+  <label>Ocasião, se estiver escrita
     <select name="ocasiao">
       <option value="">Não está escrita</option>
       ${opcoes(OCASIOES, { cafe: "Café", almoco: "Almoço", jantar: "Jantar" })}
     </select>
   </label>
-  <label>Horas após a jornada
+  <label>Horas após a jornada, se estiver escrito
     <input name="horasAposJornada" inputmode="numeric" placeholder="3">
-  </label>
-  <label>Convenção do almoço, se houver
-    <input name="convenio" inputmode="decimal" placeholder="40,00">
   </label>
   <label class="check"><input type="checkbox" name="documentoFiscal"> Cupom ou nota fiscal</label>
   <label class="check"><input type="checkbox" name="temCnpj"> Tem CNPJ</label>
@@ -109,11 +132,11 @@ export function formulario(): string {
   <label class="check"><input type="checkbox" name="beneficioJaPago"> Benefício já pago</label>
   <label class="check"><input type="checkbox" name="alcool"> Bebida alcoólica</label>
   <label class="check"><input type="checkbox" name="itemVedado"> Item não autorizado</label>
-  <button type="submit">Julgar</button>
+  <button type="submit">Enviar</button>
 </form>`,
+    "/enviar",
   );
 }
-
 function texto(form: FormData, nome: string): string | null {
   const v = form.get(nome);
   if (typeof v !== "string") return null;
@@ -159,7 +182,7 @@ export function lerNota(form: FormData, hoje: string): { ok: true; nota: Comprov
     nota: {
       tipo,
       valorCentavos,
-      dataEmissao: data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : null,
+      dataEmissao: data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : hoje,
       documentoFiscal: marcado(form, "documentoFiscal"),
       temCnpj: marcado(form, "temCnpj"),
       nomeNoComprovante: texto(form, "nomeNoComprovante"),
@@ -193,17 +216,55 @@ function esc(s: string): string {
   return s.replace(/[&<>]/g, (c) => (c === "&" ? "\u0026amp;" : c === "<" ? "\u0026lt;" : "\u0026gt;"));
 }
 
-export function decisao(j: Julgamento): string {
-  const tom = j.status === "aprovada" ? "pine" : "clay";
-  const motivos = j.motivos.map((m) => `<li>${esc(m.texto)}</li>`).join("");
+export function decisao(j: Julgamento, extra: string | null = null): string {
+  const tom = j.status === "aprovada" ? "pine" : j.status === "excedente_vp" ? "" : "clay";
+  const motivo = extra ?? j.motivos[0]?.texto ?? j.mensagem;
   const valor = j.valorReembolsavelCentavos == null ? "" : `<p class="valor">${esc(brl(j.valorReembolsavelCentavos))}</p>`;
+  const lista = j.motivos.map((m) => `<li>${esc(m.texto)}</li>`).join("");
   return pagina(
     palavra(j.status),
-    `<p>Resultado</p>
-<h1 class="${tom}">${palavra(j.status)}</h1>
-<p>${esc(j.mensagem)}</p>
-${valor}
-${motivos ? `<ul>${motivos}</ul>` : ""}
-<a class="ir" href="/nota">Enviar outra</a>`,
+    `<article class="cartao">
+  <p class="marca">Anota sem volta</p>
+  <h1 class="${tom}">${palavra(j.status)}</h1>
+  <p class="motivo">${esc(motivo)}</p>
+  ${valor}
+  <p class="linha">${esc(j.politica.nome)}</p>
+  ${lista ? `<ul>${lista}</ul>` : ""}
+</article>
+<a class="ir" href="/enviar">Enviar outra</a>`,
+    "/eu",
+  );
+}
+
+export const FRASE = {
+  sem_base: "Faltou hash, telefone ou histórico.",
+  duplicada: "Mesmo hash, ou mesmo CNPJ, valor e data nesta empresa.",
+  editada: "O arquivo não bate com o hash original.",
+  repetida: "Mesmo telefone e estabelecimento, fora do intervalo da política.",
+  fora_do_padrao: "Valor acima do histórico mínimo deste telefone.",
+  limpa: "Nenhum teste positivo.",
+} as const;
+
+export function fraude(): string {
+  const itens = Object.entries(FRASE)
+    .map(([codigo, frase]) => `<li><span>${esc(codigo)}</span><p>${esc(frase)}</p></li>`)
+    .join("");
+  return pagina(
+    "Fraude",
+    `<p class="marca">FRAUDE</p>
+<h1>Marca, não paga.</h1>
+<p>A Torita roda antes da política. Não aprova e não mexe no Pix.</p>
+<ol class="risco">${itens}</ol>`,
+    "/fraude",
+  );
+}
+
+export function resultadoVazio(): string {
+  return pagina(
+    "Resultado",
+    `<p class="marca">RESULTADO</p>
+<h1>Nenhuma nota ainda.</h1>
+<a class="ir" href="/enviar">Enviar uma nota</a>`,
+    "/eu",
   );
 }
