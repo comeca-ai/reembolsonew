@@ -19,6 +19,11 @@ const subir = `<!doctype html>
   a { color: var(--ink); }
 </style>
 <main>
+<nav style="display:flex;gap:18px;margin:0 0 28px">
+  <a href="/">Política</a>
+  <a href="/resumo">Resumo</a>
+  <a href="/nota">Nota</a>
+</nav>
   <p>Política</p>
   <h1>Subir a política</h1>
   <p>Primeiro a empresa sobe o arquivo. Depois revisa o que chegou. O que não está escrito não entra.</p>
@@ -50,6 +55,11 @@ const html = `<!doctype html>
   footer { margin-top:auto; padding-top:4rem; font-size:.75rem; color:var(--muted); }
 </style>
 <main>
+<nav style="display:flex;gap:18px;margin:0 0 28px">
+  <a href="/">Política</a>
+  <a href="/resumo">Resumo</a>
+  <a href="/nota">Nota</a>
+</nav>
   <article>
     <p class="marca">Reembolsa</p>
     <h1 class="pine">Aprovada</h1>
@@ -129,13 +139,18 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
   a { color:#1c1915; }
 </style>
 <main>
+<nav style="display:flex;gap:18px;margin:0 0 28px">
+  <a href="/">Política</a>
+  <a href="/resumo">Resumo</a>
+  <a href="/nota">Nota</a>
+</nav>
   <p>${esc(POLITICA.empresa)} · ${esc(POLITICA.emissao)}</p>
   <h1>Resumo para aprovar</h1>
   <p>${esc(POLITICA.nome)}</p>
   ${arquivoLinha}
   <ol>${lista}</ol>
   ${acao}
-  <p><a href="/">Subir outra</a></p>
+  <p><a href="/">Subir outra</a> · <a href="/nota">Ver a nota</a></p>
 </main>`;
 }
 
