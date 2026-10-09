@@ -5,77 +5,64 @@ const html = `<!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>reembolsonew</title>
+<title>Reembolsa</title>
 <style>
-  :root { color-scheme: light; --ink:#1c1915; --paper:#f6f1e7; --line:#e4d9c8; --pine:#1f6b4a; --clay:#9a3b2f; --muted:#6d645b; }
+  :root { color-scheme: light; --ink:#1c1915; --paper:#f3efe6; --card:#faf7f1; --line:#e4dac8; --pine:#1b6b43; --clay:#8d3b28; --muted:#5c564c; }
   * { box-sizing: border-box; }
   body { margin:0; font:16px/1.45 ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
-  main { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; }
-  h1 { font-size: 2rem; margin: 0 0 4px; letter-spacing: -0.03em; }
-  p.lead { color: var(--muted); margin-top: 0; }
-  button, textarea { font: inherit; }
-  .row { display:flex; flex-wrap:wrap; gap:8px; margin: 16px 0; }
-  button { background:#fff; border:1px solid var(--line); border-radius:999px; padding:10px 14px; cursor:pointer; }
-  button.primary { background:var(--ink); color:#fff; border-color:var(--ink); }
-  textarea { width:100%; min-height: 220px; border:1px solid var(--line); border-radius:14px; padding:12px; background:#fff; }
-  article { margin-top:18px; background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px; }
-  .status { font-weight:700; }
-  .barrada, .nao_lida { color: var(--clay); }
-  .aprovada { color: var(--pine); }
-  .excedente_vp { color: #8a5a12; }
-  li { margin: 4px 0; }
-  code { font-size: 0.92em; }
+  main { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; display:grid; gap:16px; }
+  @media (min-width: 760px) { main { grid-template-columns: 1fr 1fr; } }
+  article { min-height: 34rem; display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:32px 28px; }
+  .marca { margin:0; font-size:.875rem; color:var(--muted); }
+  h1 { margin:3.5rem 0 0; font-size:3rem; line-height:1; font-weight:500; }
+  .pine { color:var(--pine); }
+  .clay { color:var(--clay); }
+  .valor { margin:1.5rem 0 0; font-size:2.4rem; line-height:1; font-variant-numeric:tabular-nums; }
+  .linhas { margin-top:2.5rem; font-size:1.125rem; }
+  .linhas p { margin:.25rem 0; }
+  .muted { color:var(--muted); }
+  footer { margin-top:auto; padding-top:4rem; font-size:.75rem; color:var(--muted); }
 </style>
 <main>
-  <h1>reembolsonew</h1>
-  <p class="lead">${POLITICA.nome}. Emissão ${POLITICA.emissao}. A regra decide. Não fica em análise.</p>
-  <div class="row" id="atalhos"></div>
-  <textarea id="json" spellcheck="false"></textarea>
-  <div class="row"><button class="primary" id="julgar" type="button">Julgar</button></div>
-  <article id="saida" hidden></article>
+  <article>
+    <p class="marca">Reembolsa</p>
+    <h1 class="pine">Aprovada</h1>
+    <p class="valor">R$ 63,93</p>
+    <div class="linhas">
+      <p>alimentação · 09/10/2026</p>
+      <p>Pix 10/10</p>
+      <p class="muted">política ${POLITICA.emissao}</p>
+    </div>
+    <footer>sem operador</footer>
+  </article>
+  <article>
+    <p class="marca">Reembolsa</p>
+    <h1 class="clay">Negada</h1>
+    <p class="valor">R$ 203,95</p>
+    <div class="linhas">
+      <p>alimentação · 09/10/2026</p>
+      <p>acima do teto de R$ 80</p>
+      <p class="muted">política ${POLITICA.emissao}</p>
+    </div>
+    <footer>sem operador</footer>
+  </article>
 </main>
-<script>
-const exemplos = ${JSON.stringify(exemplos)};
-const atalhos = document.querySelector("#atalhos");
-const box = document.querySelector("#json");
-const saida = document.querySelector("#saida");
-function mostrar(j) {
-  const itens = (j.motivos || []).map((m) => "<li><code>" + m.codigo + "</code> " + m.texto + "</li>").join("");
-  const ok = (j.conforme || []).map((t) => "<li>" + t + "</li>").join("");
-  saida.hidden = false;
-  saida.innerHTML = "<p class='status " + j.status + "'>" + j.mensagem + "</p>"
-    + (itens ? "<p>Motivos</p><ul>" + itens + "</ul>" : "")
-    + (ok ? "<p>Conforme</p><ul>" + ok + "</ul>" : "");
-}
-exemplos.forEach((ex) => {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.textContent = ex.descricao;
-  b.onclick = () => { box.value = JSON.stringify(ex, null, 2); julgar(); };
-  atalhos.append(b);
-});
-box.value = JSON.stringify(exemplos[0], null, 2);
-async function julgar() {
-  const r = await fetch("/api/julgar", { method:"POST", headers:{ "content-type":"application/json" }, body: box.value });
-  mostrar(await r.json());
-}
-document.querySelector("#julgar").onclick = julgar;
-julgar();
-</script>
 `;
 
+const cabecalhos = {
+  html: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" },
+  json: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+};
+
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data, null, 2), {
-    status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
-  });
+  return new Response(JSON.stringify(data), { status, headers: cabecalhos.json });
 }
 
 export default {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/") {
-      return new Response(html, { headers: { "content-type": "text/html; charset=utf-8" } });
+      return new Response(html, { headers: cabecalhos.html });
     }
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, politica: POLITICA.emissao });

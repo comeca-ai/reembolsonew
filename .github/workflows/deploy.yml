@@ -13,7 +13,20 @@ jobs:
         with:
           node-version: "22"
       - run: npm install --legacy-peer-deps
+      - run: npm test
+      - name: Chave da Cloudflare
+        id: chave
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Sem CLOUDFLARE_API_TOKEN. O código está pronto. Rode de novo depois da chave."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Deploy to Cloudflare Workers
+        if: steps.chave.outputs.ready == 'true'
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
