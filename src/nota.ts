@@ -13,6 +13,7 @@ function menu(atual: string): string {
     ["/eu", "Resultado"],
     ["/fraude", "Fraude"],
     ["/torito", "Torito"],
+    ["/cnae", "CNAE"],
   ];
   return `<nav>${itens
     .map(([href, nome]) => `<a href="${href}"${href === atual ? ' aria-current="page"' : ""}>${nome}</a>`)
@@ -243,6 +244,29 @@ export function painelTorito(uf: string, passosUf: string[], ufs: readonly strin
 <details><summary>UFs</summary><p>${ufs.map((item) => esc(item)).join(" · ")}</p></details>
 <footer>LC 214/2025 · não é decisão</footer>`,
     "/torito",
+  );
+}
+
+export function painelCnae(estado: string, numero: string, contexto: string, artigo: string): string {
+  return pagina(
+    "CNAE",
+    `<p class="estado">${esc(estado)}</p>
+<p class="numero">${esc(numero)}</p>
+<p class="contexto">${esc(contexto)}</p>
+<p class="efeito">Sem crédito. O Pix não muda.</p>
+<form method="get" action="/cnae">
+  <label>CNAE
+    <input name="c" inputmode="numeric" placeholder="5620-1/01" required>
+  </label>
+  <button type="submit">Ver</button>
+</form>
+<details><summary>O que a lei escreve</summary>
+<p>CNAE 5620-1/01. Art. 273, § 2º, I. Fora do regime de bar.</p>
+<p>Educação, art. 129, NBS. Saúde, art. 130, NBS. Cesta, art. 125, NCM.</p>
+<p>Medicamento, art. 146, LC 227/2026, registro na Anvisa. Não é CNAE.</p>
+</details>
+<footer>LC 214/2025, com a LC 227/2026</footer>`,
+    "/cnae",
   );
 }
 
