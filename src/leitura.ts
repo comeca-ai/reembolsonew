@@ -51,8 +51,9 @@ function jsonDe(texto: string): Record<string, unknown> {
   const ini = texto.indexOf("{");
   const fim = texto.lastIndexOf("}");
   if (ini < 0 || fim < ini) return {};
+  const bruto = texto.slice(ini, fim + 1).replace(/(\d),(\d{2})(?=\s*[,}\n])/g, "$1.$2");
   try {
-    const v = JSON.parse(texto.slice(ini, fim + 1)) as unknown;
+    const v = JSON.parse(bruto) as unknown;
     return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
   } catch {
     return {};
@@ -60,6 +61,7 @@ function jsonDe(texto: string): Record<string, unknown> {
 }
 
 function str(v: unknown): string | null {
+  if (typeof v === "number" && Number.isFinite(v)) return String(v).replace(".", ",");
   if (typeof v !== "string") return null;
   const t = v.trim();
   return t && t !== "null" ? t : null;
