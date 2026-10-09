@@ -237,13 +237,22 @@ async function responder(request: Request, env: Env): Promise<Response> {
         texto = "";
       }
       const nota = deLeitura(texto, dataSaoPaulo(new Date()));
+      const leitura = texto.trim() ? texto.slice(0, 180) : "A leitura não trouxe valor.";
       const anterior = cookieDe(request, "hash");
-      const codigo = !hash ? "sem_base" : anterior === hash ? "duplicada" : "limpa";
-      let j = julgar(nota);
-      if (codigo === "duplicada") {
-        j = { ...j, status: "barrada", mensagem: `Barrada. ${FRASE.duplicada}`, motivos: [{ codigo, texto: FRASE.duplicada }, ...j.motivos], valorReembolsavelCentavos: null };
+      const codigo = !hash ? "sem_base" : anterior === hash ? "duplicada" : texto.trim() ? "limpa" : "sem_base";
+      const barra = codigo === "duplicada";
+      let j = barra
+        ? { status: "barrada" as const, mensagem: `Barrada. ${FRASE.duplicada}`, motivos: [{ codigo, texto: FRASE.duplicada }], conforme: [], valorReembolsavelCentavos: null, politica: { nome: POLITICA.nome, empresa: POLITICA.empresa, emissao: POLITICA.emissao } }
+        : julgar(nota);
+      if (!texto.trim() && !barra) {
+        j = { ...j, status: "nao_lida", mensagem: "Não lida. A leitura não trouxe valor.", motivos: [{ codigo: "sem_valor", texto: "A leitura não trouxe valor." }], valorReembolsavelCentavos: null };
       }
-      const html = decisao(j, codigo === "limpa" ? null : FRASE[codigo]);
+      const fiscal = j.status === "aprovada" ? "sem crédito" : null;
+      const html = decisao(j, codigo === "limpa" ? null : FRASE[codigo], {
+        leitura,
+        torita: `${codigo}. ${FRASE[codigo]}`,
+        fiscal,
+      });
       const headers = new Headers({ ...cabecalhos.html, "cache-control": "no-store" });
       headers.append("set-cookie", `hash=${hash}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`);
       const curto = encodeURIComponent(JSON.stringify({

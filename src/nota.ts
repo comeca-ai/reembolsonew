@@ -166,11 +166,23 @@ function esc(s: string): string {
   return s.replace(/[&<>]/g, (c) => (c === "&" ? "\u0026amp;" : c === "<" ? "\u0026lt;" : "\u0026gt;"));
 }
 
-export function decisao(j: Julgamento, extra: string | null = null): string {
+export function decisao(
+  j: Julgamento,
+  extra: string | null = null,
+  trilha: { leitura: string; torita: string; fiscal: string | null } | null = null,
+): string {
   const tom = j.status === "aprovada" ? "pine" : j.status === "excedente_vp" ? "" : "clay";
   const motivo = extra ?? j.motivos[0]?.texto ?? j.mensagem;
   const valor = j.valorReembolsavelCentavos == null ? "" : `<p class="valor">${esc(brl(j.valorReembolsavelCentavos))}</p>`;
   const lista = j.motivos.map((m) => `<li>${esc(m.texto)}</li>`).join("");
+  const passos = trilha
+    ? `<ol class="risco">
+  <li><span>Leitura</span><p>${esc(trilha.leitura)}</p></li>
+  <li><span>Torita</span><p>${esc(trilha.torita)}</p></li>
+  <li><span>Política</span><p>${esc(j.mensagem)}</p></li>
+  ${trilha.fiscal ? `<li><span>Torito</span><p>${esc(trilha.fiscal)}</p></li>` : ""}
+</ol>`
+    : "";
   return pagina(
     palavra(j.status),
     `<article class="cartao">
@@ -180,6 +192,7 @@ export function decisao(j: Julgamento, extra: string | null = null): string {
   ${valor}
   <p class="linha">${esc(j.politica.nome)}</p>
   ${lista ? `<ul>${lista}</ul>` : ""}
+  ${passos}
 </article>
 <a class="ir" href="/enviar">Enviar outra</a>`,
     "/eu",
