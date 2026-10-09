@@ -2,7 +2,7 @@ import { exemplos } from "./exemplos.ts";
 import { deLeitura, lerImagem, resumoLeitura } from "./leitura.ts";
 import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio, casca, painelTorito } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
-import { UFS, rodar } from "./torito.ts";
+import { UFS, torito, type Regra } from "./torito.ts";
 
 const inicio = casca(
   "Anota sem volta",
@@ -124,9 +124,17 @@ async function responder(request: Request, env: Env): Promise<Response> {
     }
     if (request.method === "GET" && url.pathname === "/torito") {
       const uf = url.searchParams.get("uf")?.toUpperCase() ?? "SP";
-      const data = url.searchParams.get("data") ?? "2026-10-09";
-      const saida = rodar({ uf, data, aprovada: true, artigo: null });
-      return new Response(painelTorito(saida.uf, saida.passos, UFS), { headers: cabecalhos.html });
+      const saida = torito({ empresa: POLITICA.empresa, uf, data: "2026-10-09" }, []);
+      return new Response(painelTorito(saida.uf, [saida.linha, "Base vazia. Zero artigos. Não escolhe."], UFS), { headers: cabecalhos.html });
+    }
+    if (request.method === "POST" && url.pathname === "/api/torito") {
+      const bruto = await request.text();
+      try {
+        const corpo = JSON.parse(bruto) as { empresa?: string; uf?: string; data?: string; base?: Regra[] };
+        return json(torito({ empresa: corpo.empresa ?? null, uf: corpo.uf ?? null, data: corpo.data ?? null }, corpo.base ?? []));
+      } catch {
+        return json({ erro: "json inválido" }, 400);
+      }
     }
     if (request.method === "GET" && url.pathname === "/fraude") {
       return new Response(fraude(), { headers: cabecalhos.html });
@@ -175,7 +183,7 @@ async function responder(request: Request, env: Env): Promise<Response> {
         const motivo = lida.erro ?? "Não leu o documento.";
         j = { ...j, status: "nao_lida", mensagem: "Não lida.", motivos: [{ codigo: "nao_leu", texto: motivo }], valorReembolsavelCentavos: null };
       }
-      const fiscal = j.status === "aprovada" ? rodar({ uf: "SP", data: dataSaoPaulo(new Date()), aprovada: true, artigo: null }).linha : null;
+      const fiscal = j.status === "aprovada" ? torito({ empresa: POLITICA.empresa, uf: "SP", data: dataSaoPaulo(new Date()) }, []).linha : null;
       const html = decisao(j, j.motivos[0]?.texto ?? null, {
         leitura,
         torita: duplicada ? `duplicada. ${FRASE.duplicada}` : null,
