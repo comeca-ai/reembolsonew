@@ -12,5 +12,8 @@ custom_domain = true
 pattern = "www.anotasemvolta.com.br"
 custom_domain = true
 
+[ai]
+binding = "AI"
+
 [observability]
 enabled = true

@@ -1,4 +1,5 @@
 import { exemplos } from "./exemplos.ts";
+import { deLeitura, lerImagem } from "./leitura.ts";
 import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 
@@ -172,17 +173,19 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
 </main>`;
 }
 
+type Env = { AI?: { run: (modelo: string, entrada: unknown) => Promise<unknown> } };
+
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === "HEAD") {
-      const get = await responder(new Request(request.url, { method: "GET", headers: request.headers }));
+      const get = await responder(new Request(request.url, { method: "GET", headers: request.headers }), env);
       return new Response(null, { status: get.status, headers: get.headers });
     }
-    return responder(request);
+    return responder(request, env);
   },
 };
 
-async function responder(request: Request): Promise<Response> {
+async function responder(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === "GET" && url.pathname === "/") {
       return new Response(inicio, { headers: cabecalhos.html });
@@ -225,12 +228,18 @@ async function responder(request: Request): Promise<Response> {
       if (!(foto instanceof File) || foto.size === 0) {
         return new Response("Falta a foto da nota.", { status: 400, headers: cabecalhos.html });
       }
-      const hash = await sha256(await foto.arrayBuffer());
-      const lida = lerNota(form, dataSaoPaulo(new Date()));
-      if (!lida.ok) return new Response(lida.erro, { status: 400, headers: cabecalhos.html });
+      const bytes = await foto.arrayBuffer();
+      const hash = await sha256(bytes);
+      let texto = "";
+      try {
+        texto = await lerImagem(env.AI, bytes, foto.type);
+      } catch {
+        texto = "";
+      }
+      const nota = deLeitura(texto, dataSaoPaulo(new Date()));
       const anterior = cookieDe(request, "hash");
       const codigo = !hash ? "sem_base" : anterior === hash ? "duplicada" : "limpa";
-      let j = julgar(lida.nota);
+      let j = julgar(nota);
       if (codigo === "duplicada") {
         j = { ...j, status: "barrada", mensagem: `Barrada. ${FRASE.duplicada}`, motivos: [{ codigo, texto: FRASE.duplicada }, ...j.motivos], valorReembolsavelCentavos: null };
       }

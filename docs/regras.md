@@ -6,7 +6,8 @@ Origem: o que o dono fechou na conversa e o que `julgar` executa. Sem sinônimo.
 - O PDF não é lido. Nenhuma regra nasce do arquivo.
 - O resumo é o que o motor já aplica, não uma leitura do PDF.
 - Data e hora de envio e de consumo são gravadas no servidor. A tela não pede e não mostra.
-- A foto não fica guardada. Fica o hash.
+- A nota entra só com a foto. A leitura é da imagem. A tela não pede finalidade.
+- Palavra que não está escrita não vira categoria. Padaria não é alimentação.
 - Sem hash, a Torita responde `sem_base`. `sem_base` não é suspeita.
 - Torita devolve um código só: `limpa`, `duplicada`, `editada`, `repetida`, `fora_do_padrao`, `sem_base`. A frase sai da tabela, não do modelo.
 - `duplicada`: mesmo hash, ou mesmo CNPJ, valor e data na mesma empresa.

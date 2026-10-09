@@ -36,7 +36,8 @@ const estilo = `<style>
   .valor { margin-top:1.2rem; font:500 2.4rem/1 Georgia, serif; }
   .motivo { margin:1.2rem 0 0; font:500 1.6rem/1.2 Georgia, serif; color:var(--ink); }
   .cartao { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px; }
-  .marca { font:12px/1 ui-monospace, monospace; letter-spacing:.12em; color:var(--muted); }
+  .foto { display:flex; min-height:14rem; flex-direction:column; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:16px; background:var(--card); text-align:center; }
+  .foto span { display:block; margin-top:8px; color:var(--muted); font-size:14px; }
   .risco { list-style:none; padding:0; }
   .risco li { display:grid; grid-template-columns:9rem 1fr; gap:12px; border-bottom:1px solid var(--line); padding:14px 0; }
   nav a[aria-current="page"] { border-bottom:2px solid var(--ink); }
@@ -75,63 +76,12 @@ export function formulario(bloqueado: boolean): string {
     "Enviar nota",
     `<p class="marca">NOTA</p>
 <h1>Enviar</h1>
-<p>Sobe a foto. Escreve só o que está nela. A data e a hora ficam no servidor. A foto não fica guardada.</p>
+<p>Sobe a foto. A leitura sai da imagem. Não peça finalidade. A data e a hora ficam no servidor. A foto não fica guardada.</p>
 <form method="post" action="/enviar" enctype="multipart/form-data">
-  <label>Foto da nota
-    <input name="foto" type="file" accept="image/*,.pdf" required>
+  <label class="foto">Foto da nota
+    <span>JPG ou PNG</span>
+    <input name="foto" type="file" accept="image/*" required>
   </label>
-  <label>Tipo
-    <select name="tipo" required>
-      <option value="">Escolha</option>
-      ${opcoes(TIPOS, { taxi: "Táxi", refeicao: "Refeição", estacionamento: "Estacionamento", pedagio: "Pedágio", transporte: "Transporte", outro: "Outro" })}
-    </select>
-  </label>
-  <label>Estabelecimento
-    <input name="estabelecimento" autocomplete="off">
-  </label>
-  <label>CNPJ
-    <input name="cnpj" inputmode="numeric" autocomplete="off">
-  </label>
-  <label>Valor
-    <input name="valor" inputmode="decimal" placeholder="20,00" required>
-  </label>
-  <label>Nome no comprovante
-    <input name="nomeNoComprovante" autocomplete="name">
-  </label>
-  <label>Colaborador
-    <input name="colaborador" autocomplete="name">
-  </label>
-  <label>Pagamento
-    <select name="pagamento">
-      <option value="">Não informado</option>
-      ${opcoes(PAGAMENTOS, { dinheiro: "Dinheiro", debito: "Débito", credito: "Crédito", pix: "Pix", app: "Aplicativo", outro: "Outro" })}
-    </select>
-  </label>
-  <label>Meio, se for táxi
-    <select name="meioTaxi">
-      <option value="">Não é táxi</option>
-      ${opcoes(MEIOS, { uber: "Uber", "99": "99", cabify: "Cabify", easy: "Easy Táxi", convencional: "Convencional" })}
-    </select>
-  </label>
-  <label>Ocasião, se estiver escrita
-    <select name="ocasiao">
-      <option value="">Não está escrita</option>
-      ${opcoes(OCASIOES, { cafe: "Café", almoco: "Almoço", jantar: "Jantar" })}
-    </select>
-  </label>
-  <label>Horas após a jornada, se estiver escrito
-    <input name="horasAposJornada" inputmode="numeric" placeholder="3">
-  </label>
-  <label class="check"><input type="checkbox" name="documentoFiscal"> Cupom ou nota fiscal</label>
-  <label class="check"><input type="checkbox" name="temCnpj"> Tem CNPJ</label>
-  <label class="check"><input type="checkbox" name="justificativaExtraordinaria"> Justificativa extraordinária</label>
-  <label class="check"><input type="checkbox" name="aprovacaoGestorPrevia"> Aprovação prévia do gestor</label>
-  <label class="check"><input type="checkbox" name="viagem"> Viagem</label>
-  <label class="check"><input type="checkbox" name="destinoAeroporto"> Destino aeroporto</label>
-  <label class="check"><input type="checkbox" name="feriado"> Feriado</label>
-  <label class="check"><input type="checkbox" name="beneficioJaPago"> Benefício já pago</label>
-  <label class="check"><input type="checkbox" name="alcool"> Bebida alcoólica</label>
-  <label class="check"><input type="checkbox" name="itemVedado"> Item não autorizado</label>
   <button type="submit">Enviar</button>
 </form>`,
     "/enviar",
