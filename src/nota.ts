@@ -49,8 +49,12 @@ const estilo = `<link rel="preconnect" href="https://fonts.googleapis.com">
   button, a.ir { display:inline-flex; align-items:center; height:48px; margin-top:20px; padding:0 18px; border:0; border-radius:4px; background:var(--ink); color:var(--paper); font: 500 14px/1 Outfit, sans-serif; text-decoration:none; }
   .pine { color:var(--pine); }
   .clay { color:var(--clay); }
-  .valor { margin-top:1.4rem; font:500 3rem/1 Fraunces, Georgia, serif; }
-  .motivo { margin:1.6rem 0 0; font:500 1.8rem/1.15 Fraunces, Georgia, serif; color:var(--ink); max-width: 22ch; }
+  .estado { margin: 0; font: 500 3.4rem/1 Fraunces, Georgia, serif; }
+  .numero { margin: 0.75rem 0 0; font: 500 1.75rem/1 Fraunces, Georgia, serif; }
+  .contexto { margin: 0.5rem 0 0; color: var(--muted); }
+  .efeito { margin: 1.25rem 0 0; font-size: 1.15rem; }
+  footer { margin-top: 3rem; color: #8a8378; font-size: 0.8rem; }
+  details { margin-top: 1.5rem; color: var(--muted); font-size: 0.85rem; }
   .cartao { min-height: 28rem; display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:32px 28px; }
   .cartao .olho { margin-bottom: auto; }
   .foto { display:flex; min-height:16rem; flex-direction:column; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:16px; background:var(--card); text-align:center; font: 500 2.2rem/1 Fraunces, Georgia, serif; color:var(--ink); }
@@ -200,24 +204,24 @@ function esc(s: string): string {
 export function decisao(
   j: Julgamento,
   extra: string | null = null,
-  trilha: { leitura: string; torita: string; fiscal: string | null } | null = null,
+  trilha: { leitura: string; torita: string | null; fiscal: string | null; hash?: string } | null = null,
 ): string {
-  const tom = j.status === "aprovada" ? "pine" : j.status === "excedente_vp" ? "" : "clay";
-  const motivo = extra ?? j.motivos[0]?.texto ?? j.mensagem;
-  const valor = j.valorReembolsavelCentavos == null ? "" : `<p class="valor">${esc(brl(j.valorReembolsavelCentavos))}</p>`;
-  const passos = trilha
-    ? `<p>${esc(trilha.leitura)}</p><p>${esc(trilha.torita)}</p>${trilha.fiscal ? `<p>${esc(trilha.fiscal)}</p>` : ""}`
-    : "";
+  const estado = palavra(j.status);
+  const numero = j.valorReembolsavelCentavos == null ? "" : `<p class="numero">${esc(brl(j.valorReembolsavelCentavos))}</p>`;
+  const contexto = trilha?.leitura || extra || j.motivos[0]?.texto || "";
+  const efeito = j.status === "aprovada" ? "Reembolso aprovado. Pix marcado." : "Sem Pix";
+  const detalhe = [trilha?.torita, trilha?.fiscal, trilha?.hash ? `Hash ${trilha.hash.slice(0, 12)}` : ""]
+    .filter(Boolean)
+    .map((linha) => `<p>${esc(linha as string)}</p>`)
+    .join("");
   return pagina(
-    palavra(j.status),
-    `<article class="cartao">
-  <p class="marca">Anota sem volta</p>
-  <h1 class="${tom}">${palavra(j.status)}</h1>
-  <p class="motivo">${esc(motivo)}</p>
-  ${valor}
-  ${passos}
-</article>
-<a class="ir" href="/enviar">Enviar outra</a>`,
+    estado,
+    `<p class="estado ${j.status === "aprovada" ? "pine" : "clay"}">${estado}</p>
+${numero}
+${contexto ? `<p class="contexto">${esc(contexto)}</p>` : ""}
+<p class="efeito">${efeito}</p>
+${detalhe ? `<details><summary>Detalhe</summary>${detalhe}</details>` : ""}
+<footer>política ${esc(j.politica.emissao)}</footer>`,
     "/eu",
   );
 }
@@ -232,15 +236,12 @@ export const FRASE = {
 } as const;
 
 export function fraude(): string {
-  const itens = Object.entries(FRASE)
-    .map(([codigo, frase]) => `<li><span>${esc(codigo)}</span><p>${esc(frase)}</p></li>`)
-    .join("");
   return pagina(
     "Fraude",
-    `<p class="marca">FRAUDE</p>
-<h1>Marca, não paga.</h1>
-<p>A Torita roda antes da política. Não aprova e não mexe no Pix.</p>
-<ol class="risco">${itens}</ol>`,
+    `<p class="estado">Lista vazia</p>
+<p class="contexto">Sem par apontado, nada entra.</p>
+<p class="efeito">Não paga.</p>
+<footer>sem score</footer>`,
     "/fraude",
   );
 }

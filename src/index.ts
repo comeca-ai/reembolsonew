@@ -169,20 +169,20 @@ async function responder(request: Request, env: Env): Promise<Response> {
       const nota = deLeitura(texto, dataSaoPaulo(new Date()));
       const leitura = texto.trim() ? resumoLeitura(texto, dataSaoPaulo(new Date())) : lida.erro ?? "A leitura não trouxe valor.";
       const anterior = cookieDe(request, "hash");
-      const codigo = !hash ? "sem_base" : anterior === hash ? "duplicada" : texto.trim() ? "limpa" : "sem_base";
-      const barra = codigo === "duplicada";
-      let j = barra
-        ? { status: "barrada" as const, mensagem: `Barrada. ${FRASE.duplicada}`, motivos: [{ codigo, texto: FRASE.duplicada }], conforme: [], valorReembolsavelCentavos: null, politica: { nome: POLITICA.nome, empresa: POLITICA.empresa, emissao: POLITICA.emissao } }
+      const duplicada = Boolean(hash) && anterior === hash;
+      let j = duplicada
+        ? { status: "barrada" as const, mensagem: "Negada. Hash repetido.", motivos: [{ codigo: "hash_repetido", texto: FRASE.duplicada }], conforme: [], valorReembolsavelCentavos: null, politica: { nome: POLITICA.nome, empresa: POLITICA.empresa, emissao: POLITICA.emissao } }
         : julgar(nota);
-      if (!texto.trim() && !barra) {
-        const motivo = lida.erro ?? "A leitura não trouxe valor.";
-        j = { ...j, status: "nao_lida", mensagem: `Não lida. ${motivo}`, motivos: [{ codigo: "sem_valor", texto: motivo }], valorReembolsavelCentavos: null };
+      if (!texto.trim() && !duplicada) {
+        const motivo = lida.erro ?? "Não leu o documento.";
+        j = { ...j, status: "nao_lida", mensagem: "Não lida.", motivos: [{ codigo: "nao_leu", texto: motivo }], valorReembolsavelCentavos: null };
       }
       const fiscal = j.status === "aprovada" ? "sem crédito" : null;
-      const html = decisao(j, codigo === "limpa" ? null : FRASE[codigo], {
+      const html = decisao(j, j.motivos[0]?.texto ?? null, {
         leitura,
-        torita: `${codigo}. ${FRASE[codigo]}`,
+        torita: duplicada ? `duplicada. ${FRASE.duplicada}` : null,
         fiscal,
+        hash,
       });
       const headers = new Headers({ ...cabecalhos.html, "cache-control": "no-store" });
       headers.append("set-cookie", `hash=${hash}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`);
