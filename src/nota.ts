@@ -18,43 +18,74 @@ function menu(atual: string): string {
     .join("")}</nav>`;
 }
 
-const estilo = `<style>
+const estilo = `<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+<style>
   :root { color-scheme: light; --ink:#1c1915; --paper:#f3efe6; --card:#faf7f1; --line:#e4dac8; --pine:#1b6b43; --clay:#8d3b28; --muted:#5c564c; }
   * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.5 ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
-  main { max-width: 36rem; margin:0 auto; padding:40px 20px 80px; }
-  nav { display:flex; gap:18px; margin:0 0 28px; }
-  nav a { color:var(--ink); }
-  h1 { margin:8px 0 0; font:500 3rem/1 Georgia, "Times New Roman", serif; }
+  body { margin:0; font:16px/1.5 Outfit, ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
+  header, main { max-width: 48rem; margin: 0 auto; padding: 28px 20px 0; }
+  main { padding-top: 12px; padding-bottom: 96px; }
+  .olho, .marca { margin:0; font: 12px/1 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: .14em; color: var(--muted); }
+  header h1 { margin: 10px 0 0; font: 500 2.4rem/1 Fraunces, Georgia, serif; }
+  main h1 { margin: 12px 0 0; font: 500 3.4rem/0.95 Fraunces, Georgia, serif; max-width: 16ch; }
+  .muted { color: var(--muted); max-width: 36rem; }
+  nav { display:flex; gap: 4px; }
+  nav a { color: var(--muted); text-decoration: none; font: 500 14px/1 Outfit, sans-serif; height: 48px; display:inline-flex; align-items:center; padding: 0 10px; border-bottom: 2px solid transparent; }
+  nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
+  header nav { display:none; }
+  .dock { position: fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-around; background: var(--paper); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+  .dock a { flex:1; justify-content:center; border-bottom:0; border-top: 2px solid transparent; font-size: 13px; }
+  .dock a[aria-current="page"] { border-top-color: var(--ink); }
+  @media (min-width: 760px) {
+    header nav { display:flex; margin-top: 8px; }
+    .dock { display:none; }
+    main { padding-bottom: 64px; }
+    main h1 { font-size: 4.5rem; }
+  }
   label { display:grid; gap:6px; margin:0 0 14px; font-size:14px; color:var(--muted); }
   input, select { height:48px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); padding:0 12px; font:inherit; }
-  .check { display:flex; align-items:center; gap:10px; min-height:44px; color:var(--ink); }
-  .check input { width:18px; height:18px; }
-  button, a.ir { display:inline-flex; align-items:center; height:48px; margin-top:12px; padding:0 18px; border:0; border-radius:8px; background:var(--ink); color:var(--paper); font:inherit; text-decoration:none; }
+  button, a.ir { display:inline-flex; align-items:center; height:48px; margin-top:20px; padding:0 18px; border:0; border-radius:4px; background:var(--ink); color:var(--paper); font: 500 14px/1 Outfit, sans-serif; text-decoration:none; }
   .pine { color:var(--pine); }
   .clay { color:var(--clay); }
-  .valor { margin-top:1.2rem; font:500 2.4rem/1 Georgia, serif; }
-  .motivo { margin:1.2rem 0 0; font:500 1.6rem/1.2 Georgia, serif; color:var(--ink); }
-  .cartao { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px; }
-  .foto { display:flex; min-height:14rem; flex-direction:column; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:16px; background:var(--card); text-align:center; }
-  .foto span { display:block; margin-top:8px; color:var(--muted); font-size:14px; }
-  .risco { list-style:none; padding:0; }
-  .risco li { display:grid; grid-template-columns:9rem 1fr; gap:12px; border-bottom:1px solid var(--line); padding:14px 0; }
-  nav a[aria-current="page"] { border-bottom:2px solid var(--ink); }
-  li { margin:0.4rem 0; }
+  .valor { margin-top:1.4rem; font:500 3rem/1 Fraunces, Georgia, serif; }
+  .motivo { margin:1.6rem 0 0; font:500 1.8rem/1.15 Fraunces, Georgia, serif; color:var(--ink); max-width: 22ch; }
+  .cartao { min-height: 28rem; display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:32px 28px; }
+  .cartao .olho { margin-bottom: auto; }
+  .foto { display:flex; min-height:16rem; flex-direction:column; align-items:center; justify-content:center; border:1px dashed var(--line); border-radius:16px; background:var(--card); text-align:center; font: 500 2.2rem/1 Fraunces, Georgia, serif; color:var(--ink); }
+  .foto span { display:block; margin-top:12px; color:var(--muted); font: 14px/1.4 Outfit, sans-serif; }
+  ol.passos { margin: 64px 0 0; padding:0; list-style:none; border-top:1px solid var(--line); }
+  ol.passos li { border-bottom:1px solid var(--line); }
+  ol.passos a { display:grid; grid-template-columns: 3rem 1fr; gap: 16px; padding: 22px 0; color: inherit; text-decoration:none; font: 500 1.8rem/1.15 Fraunces, Georgia, serif; }
+  ol.passos .n { font: 12px/1 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); padding-top: .55rem; }
+  main ol:not(.passos) { padding-left: 1.2rem; }
+  main ol:not(.passos) li { margin: 0.55rem 0; }
+  .risco { list-style: none; padding: 0; }
+  .risco li { display:grid; grid-template-columns: 8.5rem 1fr; gap:12px; border-bottom:1px solid var(--line); padding:16px 0; }
 </style>`;
 
-function pagina(titulo: string, corpo: string, atual = "/enviar"): string {
+export function casca(titulo: string, corpo: string, atual = "/"): string {
+  const nav = menu(atual);
   return `<!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${titulo}</title>
 ${estilo}
+<header>
+  <p class="olho">ANOTA SEM VOLTA</p>
+  <h1>Anota sem volta</h1>
+  ${nav}
+</header>
 <main>
-${menu(atual)}
 ${corpo}
-</main>`;
+</main>
+<div class="dock">${nav}</div>`;
+}
+
+function pagina(titulo: string, corpo: string, atual = "/enviar"): string {
+  return casca(titulo, corpo, atual);
 }
 
 function opcoes(valores: readonly string[], rotulos: Record<string, string>): string {
@@ -65,7 +96,7 @@ export function formulario(bloqueado: boolean): string {
   if (bloqueado) {
     return pagina(
       "Enviar nota",
-      `<p class="marca">NOTA</p>
+      `<p class="olho">NOTA</p>
 <h1>Ainda não</h1>
 <p>A empresa precisa aprovar a política antes da nota.</p>
 <a class="ir" href="/politica">Voltar para a política</a>`,

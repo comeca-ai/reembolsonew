@@ -1,80 +1,32 @@
 import { exemplos } from "./exemplos.ts";
 import { deLeitura, lerImagem, resumoLeitura } from "./leitura.ts";
-import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio } from "./nota.ts";
+import { decisao, formulario, fraude, FRASE, lerNota, resultadoVazio, casca } from "./nota.ts";
 import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 
-const inicio = `<!doctype html>
-<html lang="pt-BR">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Anota sem volta</title>
-<style>
-  :root { color-scheme: light; --ink:#1c1915; --paper:#f3efe6; --muted:#5c564c; --line:#e4dac8; }
-  * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.5 ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
-  main { max-width: 40rem; margin: 0 auto; padding: 72px 20px 80px; }
-  .marca { margin:0; font: 12px/1 ui-monospace, monospace; letter-spacing: .14em; color: var(--muted); }
-  h1 { margin: 28px 0 0; font: 500 4.2rem/0.95 Georgia, "Times New Roman", serif; }
-  p { max-width: 28rem; color: var(--muted); }
-  a.ir { display:inline-flex; align-items:center; height:48px; margin-top:28px; padding:0 18px; border-radius:8px; background:var(--ink); color:var(--paper); text-decoration:none; }
-  ol { margin: 64px 0 0; padding:0; list-style:none; border-top:1px solid var(--line); }
-  li { border-bottom:1px solid var(--line); }
-  li a { display:grid; grid-template-columns: 3rem 1fr; gap: 12px; padding: 22px 0; color: inherit; text-decoration: none; font: 500 1.7rem/1.15 Georgia, serif; }
-  .n { font: 12px/1 ui-monospace, monospace; color: var(--muted); padding-top: .45rem; }
-  nav { display:flex; gap:18px; margin:0 0 8px; }
-  nav a { color: var(--ink); }
-</style>
-<main>
-  <nav>
-    <a href="/">Início</a>
-    <a href="/politica">Política</a>
-    <a href="/enviar">Enviar</a>
-    <a href="/eu">Resultado</a>
-    <a href="/fraude">Fraude</a>
-  </nav>
-  <p class="marca">ANOTA SEM VOLTA</p>
-  <h1>A nota não volta sem a regra.</h1>
-  <p>Primeiro a política. A empresa lê o resumo e aprova. Depois a nota. O que não está escrito não entra.</p>
-  <a class="ir" href="/politica">Começar</a>
-  <ol>
-    <li><a href="/politica"><span class="n">01</span><span>A empresa sobe a política.</span></a></li>
-    <li><a href="/resumo"><span class="n">02</span><span>Aprova só o que está escrito.</span></a></li>
-    <li><a href="/enviar"><span class="n">03</span><span>A nota entra. A regra decide.</span></a></li>
-  </ol>
-</main>`;
+const inicio = casca(
+  "Anota sem volta",
+  `<h1>A nota não volta sem a regra.</h1>
+<p class="muted">Primeiro a política. A empresa lê o resumo e aprova. Depois a nota. O que não está escrito não entra.</p>
+<a class="ir" href="/politica">Começar</a>
+<ol class="passos">
+  <li><a href="/politica"><span class="n">01</span><span>A empresa sobe a política.</span></a></li>
+  <li><a href="/resumo"><span class="n">02</span><span>Aprova só o que está escrito.</span></a></li>
+  <li><a href="/enviar"><span class="n">03</span><span>A nota entra. A regra decide.</span></a></li>
+</ol>`,
+  "/",
+);
 
-const subir = `<!doctype html>
-<html lang="pt-BR">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Subir política</title>
-<style>
-  :root { color-scheme: light; --ink:#1c1915; --paper:#f3efe6; --card:#faf7f1; --line:#e4dac8; --muted:#5c564c; }
-  * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.45 ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
-  main { max-width: 36rem; margin: 0 auto; padding: 40px 20px 64px; }
-  h1 { margin: 8px 0 0; font-size: 2.6rem; font-weight: 500; line-height: 1.05; }
-  p { color: var(--muted); }
-  form { margin-top: 28px; display: grid; gap: 16px; }
-  input[type=file] { font: inherit; }
-  button { height: 48px; border: 0; border-radius: 10px; background: var(--ink); color: var(--paper); font: inherit; }
-  a { color: var(--ink); }
-</style>
-<main>
-<nav style="display:flex;gap:18px;margin:0 0 28px">
-  <a href="/">Início</a>
-  <a href="/politica">Política</a>
-  <a href="/resumo">Resumo</a>
-  <a href="/nota">Nota</a>
-</nav>
-  <p>Política</p>
-  <h1>Subir a política</h1>
-  <p>Primeiro a empresa sobe o arquivo. Depois revisa o que chegou. O que não está escrito não entra.</p>
-  <form method="post" action="/politica" enctype="multipart/form-data">
-    <input type="file" name="arquivo" accept=".pdf,.txt,application/pdf,text/plain" required>
-    <button type="submit">Subir</button>
-  </form>
-</main>`;
+const subir = casca(
+  "Subir política",
+  `<p class="olho">1 · POLÍTICA</p>
+<h1>Subir a política</h1>
+<p class="muted">O arquivo chega inteiro. O resumo é o que o motor já aplica, não uma leitura do PDF.</p>
+<form method="post" action="/politica" enctype="multipart/form-data">
+  <input type="file" name="arquivo" accept=".pdf,.txt,application/pdf,text/plain" required>
+  <button type="submit">Subir</button>
+</form>`,
+  "/politica",
+);
 const cabecalhos = {
   html: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" },
   json: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
@@ -142,35 +94,17 @@ function resumo(arquivo: string | null, aprovada: boolean): string {
   const acao = aprovada
     ? `<p><strong>A empresa aprovou esta versão.</strong></p><p><a href="/enviar">Continuar para a nota</a></p>`
     : `<form method="post" action="/politica/aprovar"><button type="submit">Aprovar e ver a nota</button></form>`;
-  return `<!doctype html>
-<html lang="pt-BR">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Resumo da política</title>
-<style>
-  body { margin:0; font:16px/1.45 ui-sans-serif,system-ui,sans-serif; color:#1c1915; background:#f3efe6; }
-  main { max-width: 40rem; margin:0 auto; padding:40px 20px 64px; }
-  h1 { margin:8px 0 0; font-size:2.4rem; font-weight:500; line-height:1.05; }
-  ol { padding-left: 1.2rem; }
-  li { margin: 0.55rem 0; }
-  button { height:48px; margin-top:24px; padding:0 18px; border:0; border-radius:10px; background:#1c1915; color:#f3efe6; font:inherit; }
-  a { color:#1c1915; }
-</style>
-<main>
-<nav style="display:flex;gap:18px;margin:0 0 28px">
-  <a href="/">Início</a>
-  <a href="/politica">Política</a>
-  <a href="/resumo">Resumo</a>
-  <a href="/nota">Nota</a>
-</nav>
-  <p>${esc(POLITICA.empresa)} · ${esc(POLITICA.emissao)}</p>
-  <h1>Resumo para aprovar</h1>
-  <p>${esc(POLITICA.nome)}</p>
-  ${arquivoLinha}
-  <ol>${lista}</ol>
-  ${acao}
-  <p><a href="/politica">Subir outra</a> · <a href="/enviar">Enviar a nota</a></p>
-</main>`;
+  return casca(
+    "Resumo da política",
+    `<p class="olho">${esc(POLITICA.empresa)} · ${esc(POLITICA.emissao)}</p>
+<h1>Resumo para aprovar</h1>
+<p class="muted">${esc(POLITICA.nome)}</p>
+${arquivoLinha}
+<ol>${lista}</ol>
+${acao}
+<p><a href="/politica">Subir outra</a></p>`,
+    "/politica",
+  );
 }
 
 type Env = { AI?: { run: (modelo: string, entrada: unknown) => Promise<unknown> } };
