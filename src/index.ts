@@ -1,5 +1,6 @@
 import { exemplos } from "./exemplos.ts";
-import { brl, julgar, POLITICA, type Comprovante } from "./politica.ts";
+import { decisao, formulario, lerNota } from "./nota.ts";
+import { julgar, brl, POLITICA, type Comprovante } from "./politica.ts";
 
 const inicio = `<!doctype html>
 <html lang="pt-BR">
@@ -72,60 +73,6 @@ const subir = `<!doctype html>
     <button type="submit">Subir</button>
   </form>
 </main>`;
-const html = `<!doctype html>
-<html lang="pt-BR">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Reembolsa</title>
-<style>
-  :root { color-scheme: light; --ink:#1c1915; --paper:#f3efe6; --card:#faf7f1; --line:#e4dac8; --pine:#1b6b43; --clay:#8d3b28; --muted:#5c564c; }
-  * { box-sizing: border-box; }
-  body { margin:0; font:16px/1.45 ui-sans-serif, system-ui, sans-serif; color:var(--ink); background:var(--paper); }
-  main { max-width: 760px; margin: 0 auto; padding: 28px 18px 64px; display:grid; gap:16px; }
-  @media (min-width: 760px) { main { grid-template-columns: 1fr 1fr; } }
-  article { min-height: 34rem; display:flex; flex-direction:column; background:var(--card); border:1px solid var(--line); border-radius:16px; padding:32px 28px; }
-  .marca { margin:0; font-size:.875rem; color:var(--muted); }
-  h1 { margin:3.5rem 0 0; font-size:3rem; line-height:1; font-weight:500; }
-  .pine { color:var(--pine); }
-  .clay { color:var(--clay); }
-  .valor { margin:1.5rem 0 0; font-size:2.4rem; line-height:1; font-variant-numeric:tabular-nums; }
-  .linhas { margin-top:2.5rem; font-size:1.125rem; }
-  .linhas p { margin:.25rem 0; }
-  .muted { color:var(--muted); }
-  footer { margin-top:auto; padding-top:4rem; font-size:.75rem; color:var(--muted); }
-</style>
-<main>
-<nav style="display:flex;gap:18px;margin:0 0 28px">
-  <a href="/">Início</a>
-  <a href="/politica">Política</a>
-  <a href="/resumo">Resumo</a>
-  <a href="/nota">Nota</a>
-</nav>
-  <article>
-    <p class="marca">Reembolsa</p>
-    <h1 class="pine">Aprovada</h1>
-    <p class="valor">R$ 63,93</p>
-    <div class="linhas">
-      <p>alimentação · 09/10/2026</p>
-      <p>Pix 10/10</p>
-      <p class="muted">política ${POLITICA.emissao}</p>
-    </div>
-    <footer>sem operador</footer>
-  </article>
-  <article>
-    <p class="marca">Reembolsa</p>
-    <h1 class="clay">Negada</h1>
-    <p class="valor">R$ 203,95</p>
-    <div class="linhas">
-      <p>alimentação · 09/10/2026</p>
-      <p>acima do teto de R$ 80</p>
-      <p class="muted">política ${POLITICA.emissao}</p>
-    </div>
-    <footer>sem operador</footer>
-  </article>
-</main>
-`;
-
 const cabecalhos = {
   html: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" },
   json: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
@@ -137,6 +84,15 @@ function json(data: unknown, status = 200): Response {
 
 function esc(s: string): string {
   return s.replace(/[&<>]/g, (c) => (c === "&" ? "\u0026amp;" : c === "<" ? "\u0026lt;" : "\u0026gt;"));
+}
+
+function dataSaoPaulo(agora: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(agora);
 }
 
 function empresaAprovou(request: Request): boolean {
@@ -229,7 +185,13 @@ async function responder(request: Request): Promise<Response> {
       return new Response(subir, { headers: cabecalhos.html });
     }
     if (request.method === "GET" && url.pathname === "/nota") {
-      return new Response(html, { headers: cabecalhos.html });
+      return new Response(formulario(), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
+    }
+    if (request.method === "POST" && url.pathname === "/nota") {
+      const form = await request.formData();
+      const lida = lerNota(form, dataSaoPaulo(new Date()));
+      if (!lida.ok) return new Response(lida.erro, { status: 400, headers: cabecalhos.html });
+      return new Response(decisao(julgar(lida.nota)), { headers: { ...cabecalhos.html, "cache-control": "no-store" } });
     }
     if (request.method === "GET" && url.pathname === "/resumo") {
       return new Response(resumo(cookieDe(request, "arquivo"), empresaAprovou(request)), {
