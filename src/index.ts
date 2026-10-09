@@ -1,5 +1,5 @@
 import { exemplos } from "./exemplos.ts";
-import { julgar, POLITICA, type Comprovante } from "./politica.ts";
+import { brl, julgar, POLITICA, type Comprovante } from "./politica.ts";
 
 const subir = `<!doctype html>
 <html lang="pt-BR">
@@ -88,26 +88,53 @@ function esc(s: string): string {
   return s.replace(/[&<>]/g, (c) => (c === "&" ? "\u0026amp;" : c === "<" ? "\u0026lt;" : "\u0026gt;"));
 }
 
-function revisao(nome: string, bytes: number, texto: string | null): string {
-  const corpo = texto
-    ? `<pre style="white-space:pre-wrap;font:15px/1.45 ui-sans-serif,system-ui,sans-serif">${esc(texto)}</pre>`
-    : `<p>O PDF chegou. O texto não foi lido e nenhuma regra foi criada.</p>`;
+function empresaAprovou(request: Request): boolean {
+  const cookie = request.headers.get("cookie") ?? "";
+  return cookie.split(";").some((parte) => parte.trim() === `politica=${POLITICA.emissao}`);
+}
+
+function resumo(arquivo: string | null, aprovada: boolean): string {
+  const itens = [
+    `Prazo de ${POLITICA.prazoDias} dias.`,
+    "Sem data ou sem valor: não lida.",
+    "Comprovante em nome de terceiro: barrada.",
+    "Bebida alcoólica não é reembolsada.",
+    "Item da lista de despesas não autorizadas: barrada.",
+    "Táxi convencional não é reembolsável. Só Uber, 99, Cabify ou Easy Táxi.",
+    "Táxi exige documento fiscal, CNPJ, nome do colaborador ou do gestor, pagamento em dinheiro ou cartão, e justificativa extraordinária.",
+    "Fora de viagem, táxi só a partir de 3 horas após a jornada.",
+    "Café da manhã não é reembolsado.",
+    "Almoço só em fim de semana ou feriado, no valor da convenção coletiva.",
+    `Jantar a partir de 3 horas após a jornada, com justificativa e aprovação prévia do gestor. Teto ${brl(POLITICA.jantarTetoCentavos)}.`,
+    `Estacionamento até ${brl(POLITICA.estacionamentoTetoCentavos)}, com cupom ou nota e CNPJ.`,
+    "Acima do teto fica excedente. Só sai com autorização do VP.",
+  ];
+  const lista = itens.map((item) => `<li>${esc(item)}</li>`).join("");
+  const arquivoLinha = arquivo ? `<p>Arquivo recebido: ${esc(arquivo)}. O PDF não foi lido.</p>` : "";
+  const acao = aprovada
+    ? `<p><strong>A empresa aprovou esta versão.</strong></p>`
+    : `<form method="post" action="/politica/aprovar"><button type="submit">Aprovar</button></form>`;
   return `<!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Revisar política</title>
+<title>Resumo da política</title>
 <style>
   body { margin:0; font:16px/1.45 ui-sans-serif,system-ui,sans-serif; color:#1c1915; background:#f3efe6; }
   main { max-width: 40rem; margin:0 auto; padding:40px 20px 64px; }
-  h1 { font-size:2.4rem; font-weight:500; line-height:1.05; }
+  h1 { margin:8px 0 0; font-size:2.4rem; font-weight:500; line-height:1.05; }
+  ol { padding-left: 1.2rem; }
+  li { margin: 0.55rem 0; }
+  button { height:48px; margin-top:24px; padding:0 18px; border:0; border-radius:10px; background:#1c1915; color:#f3efe6; font:inherit; }
   a { color:#1c1915; }
 </style>
 <main>
-  <p>Revisão</p>
-  <h1>${esc(nome)}</h1>
-  <p>${bytes} bytes. Vale o arquivo. Nada foi interpretado.</p>
-  ${corpo}
+  <p>${esc(POLITICA.empresa)} · ${esc(POLITICA.emissao)}</p>
+  <h1>Resumo para aprovar</h1>
+  <p>${esc(POLITICA.nome)}</p>
+  ${arquivoLinha}
+  <ol>${lista}</ol>
+  ${acao}
   <p><a href="/">Subir outra</a></p>
 </main>`;
 }
@@ -121,6 +148,17 @@ export default {
     if (request.method === "GET" && url.pathname === "/nota") {
       return new Response(html, { headers: cabecalhos.html });
     }
+    if (request.method === "GET" && url.pathname === "/resumo") {
+      return new Response(resumo(null, empresaAprovou(request)), { headers: cabecalhos.html });
+    }
+    if (request.method === "POST" && url.pathname === "/politica/aprovar") {
+      return new Response(resumo(null, true), {
+        headers: {
+          ...cabecalhos.html,
+          "set-cookie": `politica=${POLITICA.emissao}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000`,
+        },
+      });
+    }
     if (request.method === "POST" && url.pathname === "/politica") {
       const form = await request.formData();
       const arquivo = form.get("arquivo");
@@ -130,10 +168,9 @@ export default {
       if (arquivo.size > 8_000_000) {
         return new Response("O arquivo passa de 8 MB.", { status: 413, headers: cabecalhos.html });
       }
-      const texto = arquivo.type.startsWith("text/") || arquivo.name.toLowerCase().endsWith(".txt")
-        ? (await arquivo.text()).slice(0, 20_000)
-        : null;
-      return new Response(revisao(arquivo.name || "politica", arquivo.size, texto), { headers: cabecalhos.html });
+      return new Response(resumo(arquivo.name || "politica", empresaAprovou(request)), {
+        headers: cabecalhos.html,
+      });
     }
     if (request.method === "GET" && url.pathname === "/health") {
       return json({ ok: true, politica: POLITICA.emissao });
